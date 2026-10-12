@@ -1,4 +1,4 @@
-=== semiauto-invoicing ===
+=== SemiAuto Invoicing ===
 Contributors: salmansh169
 Tags: woocommerce, thermal receipt, packaging, pdf invoice, e-invoicing
 Requires at least: 6.0

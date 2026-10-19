@@ -18,7 +18,7 @@ if ( !class_exists( 'OG_PSR_Settings_Helpers' ) ) {
          * @return array
          */
         public static function get_wc_emails() {
-            $emails = [];
+            $emails = array();
             if ( function_exists( 'WC' ) ) {
                 $wc_emails = WC()->mailer()->get_emails();
                 foreach ( $wc_emails as $email ) {
@@ -27,12 +27,12 @@ if ( !class_exists( 'OG_PSR_Settings_Helpers' ) ) {
                     }
                 }
             }
-            return ( $emails ?: [
+            return ( $emails ? $emails : array(
                 'new_order'                 => __( 'New Order', 'semiauto-invoicing' ),
                 'customer_completed_order'  => __( 'Completed Order', 'semiauto-invoicing' ),
                 'customer_processing_order' => __( 'Processing Order', 'semiauto-invoicing' ),
                 'customer_invoice'          => __( 'Customer Invoice', 'semiauto-invoicing' ),
-            ] );
+            ) );
         }
 
         /**
@@ -41,16 +41,16 @@ if ( !class_exists( 'OG_PSR_Settings_Helpers' ) ) {
          * @return array
          */
         public static function get_order_statuses() {
-            $statuses = [];
+            $statuses = array();
             if ( function_exists( 'wc_get_order_statuses' ) ) {
                 $statuses = wc_get_order_statuses();
-                $clean_statuses = [];
+                $clean_statuses = array();
                 foreach ( $statuses as $id => $label ) {
                     $clean_statuses[str_replace( 'wc-', '', $id )] = $label;
                 }
                 return $clean_statuses;
             }
-            return [
+            return array(
                 'pending'    => __( 'Pending', 'semiauto-invoicing' ),
                 'processing' => __( 'Processing', 'semiauto-invoicing' ),
                 'on-hold'    => __( 'On Hold', 'semiauto-invoicing' ),
@@ -58,7 +58,7 @@ if ( !class_exists( 'OG_PSR_Settings_Helpers' ) ) {
                 'cancelled'  => __( 'Cancelled', 'semiauto-invoicing' ),
                 'refunded'   => __( 'Refunded', 'semiauto-invoicing' ),
                 'failed'     => __( 'Failed', 'semiauto-invoicing' ),
-            ];
+            );
         }
 
         /**
@@ -78,36 +78,18 @@ if ( !class_exists( 'OG_PSR_Settings_Helpers' ) ) {
             if ( !$customer_email ) {
                 return false;
             }
-            $format_labels = [
+            $format_labels = array(
                 'thermal'   => __( 'Receipt', 'semiauto-invoicing' ),
                 'a4'        => __( 'Invoice', 'semiauto-invoicing' ),
                 'packaging' => __( 'Packaging Slip', 'semiauto-invoicing' ),
-            ];
+            );
             $doc_type = ( isset( $format_labels[$document_type] ) ? $format_labels[$document_type] : __( 'Document', 'semiauto-invoicing' ) );
-            $order_num = ( method_exists( $order, 'get_order_number' ) ? sanitize_text_field( (string) $order->get_order_number() ) : (string) $order->get_id() );
-            $subject = sanitize_text_field( sprintf( 
-                /* translators: 1: document type (e.g. Receipt), 2: order number */
-                __( 'Your %1$s for Order #%2$s', 'semiauto-invoicing' ),
-                $doc_type,
-                $order_num
-             ) );
-            $blogname = get_option( 'blogname' );
-            $message = sprintf(
-                /* translators: 1: document type (e.g. Receipt), 2: order number, 3: blog name */
-                __( 'Hello, here is your %1$s for order #%2$s from %3$s.', 'semiauto-invoicing' ),
-                esc_html( strtolower( $doc_type ) ),
-                esc_html( (string) $order_num ),
-                esc_html( (string) $blogname )
-            );
-            $headers = ['Content-Type: text/html; charset=UTF-8'];
-            $attachments = [$file_path];
-            return wp_mail(
-                $customer_email,
-                $subject,
-                $message,
-                $headers,
-                $attachments
-            );
+            // Send through the WooCommerce mailer (store sender, branding, SMTP plugins and email logs apply).
+            $emails = ( function_exists( 'WC' ) && WC()->mailer() ? WC()->mailer()->get_emails() : array() );
+            if ( !isset( $emails['OG_PSR_Email_Customer_Document'] ) ) {
+                return false;
+            }
+            return (bool) $emails['OG_PSR_Email_Customer_Document']->trigger( $order, $file_path, $doc_type );
         }
 
         /**
@@ -117,13 +99,13 @@ if ( !class_exists( 'OG_PSR_Settings_Helpers' ) ) {
          */
         public static function get_active_payment_methods_titles() {
             if ( !function_exists( 'WC' ) ) {
-                return [];
+                return array();
             }
             $gateways = WC()->payment_gateways->get_available_payment_gateways();
-            $titles = [];
+            $titles = array();
             if ( $gateways ) {
                 foreach ( $gateways as $gateway ) {
-                    if ( $gateway->enabled == 'yes' ) {
+                    if ( 'yes' === $gateway->enabled ) {
                         $titles[] = $gateway->get_title();
                     }
                 }
@@ -137,8 +119,8 @@ if ( !class_exists( 'OG_PSR_Settings_Helpers' ) ) {
          * @return array
          */
         public static function get_bacs_account_options() {
-            $accounts = get_option( 'woocommerce_bacs_accounts', [] );
-            $options = [];
+            $accounts = get_option( 'woocommerce_bacs_accounts', array() );
+            $options = array();
             if ( !empty( $accounts ) && is_array( $accounts ) ) {
                 foreach ( $accounts as $index => $account ) {
                     $label = ( isset( $account['bank_name'] ) ? $account['bank_name'] : __( 'Bank', 'semiauto-invoicing' ) );
@@ -162,14 +144,14 @@ if ( !class_exists( 'OG_PSR_Settings_Helpers' ) ) {
          * @param array $allowed_keys Optional allowlist of permitted scalar keys.
          * @return array
          */
-        public static function sanitize_array_setting( $value, $allowed_keys = [] ) {
+        public static function sanitize_array_setting( $value, $allowed_keys = array() ) {
             if ( !is_array( $value ) ) {
-                return [];
+                return array();
             }
             $clean = array_values( array_filter( array_map( function ( $item ) {
                 return ( is_scalar( $item ) ? sanitize_text_field( wp_unslash( (string) $item ) ) : '' );
             }, $value ), function ( $item ) {
-                return $item !== '';
+                return '' !== $item;
             } ) );
             if ( !empty( $allowed_keys ) && is_array( $allowed_keys ) ) {
                 $clean = array_values( array_filter( $clean, function ( $item ) use($allowed_keys) {

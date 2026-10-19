@@ -18,33 +18,33 @@ class OG_PSR_Order_List_Actions {
     public static function init() {
         $instance = new self();
         // Classic CPT edit-shop_order columns registration
-        add_filter( 'manage_edit-shop_order_columns', [$instance, 'add_order_list_column'], 15 );
+        add_filter( 'manage_edit-shop_order_columns', array($instance, 'add_order_list_column'), 15 );
         add_action(
             'manage_shop_order_posts_custom_column',
-            [$instance, 'render_order_list_column_content'],
+            array($instance, 'render_order_list_column_content'),
             15,
             2
         );
         // HPOS edit wc-orders columns registration
-        add_filter( 'manage_woocommerce_page_wc-orders_columns', [$instance, 'add_order_list_column'], 15 );
+        add_filter( 'manage_woocommerce_page_wc-orders_columns', array($instance, 'add_order_list_column'), 15 );
         add_action(
             'manage_woocommerce_page_wc-orders_custom_column',
-            [$instance, 'render_hpos_order_list_column_content'],
+            array($instance, 'render_hpos_order_list_column_content'),
             15,
             2
         );
         // Native Bulk Actions Registration (CPT + HPOS)
-        add_filter( 'bulk_actions-edit-shop_order', [$instance, 'register_bulk_actions'] );
-        add_filter( 'bulk_actions-woocommerce_page_wc-orders', [$instance, 'register_bulk_actions'] );
+        add_filter( 'bulk_actions-edit-shop_order', array($instance, 'register_bulk_actions') );
+        add_filter( 'bulk_actions-woocommerce_page_wc-orders', array($instance, 'register_bulk_actions') );
         add_filter(
             'handle_bulk_actions-edit-shop_order',
-            [$instance, 'handle_bulk_actions'],
+            array($instance, 'handle_bulk_actions'),
             10,
             3
         );
         add_filter(
             'handle_bulk_actions-woocommerce_page_wc-orders',
-            [$instance, 'handle_bulk_actions'],
+            array($instance, 'handle_bulk_actions'),
             10,
             3
         );
@@ -58,7 +58,7 @@ class OG_PSR_Order_List_Actions {
      */
     public function register_bulk_actions( $actions ) {
         if ( !is_array( $actions ) ) {
-            $actions = [];
+            $actions = array();
         }
         return $actions;
     }
@@ -86,7 +86,7 @@ class OG_PSR_Order_List_Actions {
      */
     public function add_order_list_column( $columns ) {
         if ( !is_array( $columns ) ) {
-            $columns = [];
+            $columns = array();
         }
         $columns['ogpsr_documents'] = __( 'Documents', 'semiauto-invoicing' );
         return $columns;
@@ -125,7 +125,7 @@ class OG_PSR_Order_List_Actions {
             if ( !$order_obj ) {
                 return;
             }
-            if ( $column === 'ogpsr_documents' ) {
+            if ( 'ogpsr_documents' === $column ) {
                 $this->render_actions( $order_obj );
             }
         } catch ( \Throwable $e ) {
@@ -145,7 +145,7 @@ class OG_PSR_Order_List_Actions {
             if ( !$order_obj ) {
                 return;
             }
-            if ( $column === 'ogpsr_documents' ) {
+            if ( 'ogpsr_documents' === $column ) {
                 $this->render_actions( $order_obj );
             }
         } catch ( \Throwable $e ) {
@@ -165,15 +165,15 @@ class OG_PSR_Order_List_Actions {
                 return;
             }
             $order_id = $order->get_id();
-            $enabled_formats = OG_PSR_Settings::get( 'ogpsr_receipt_formats', ['thermal'] );
+            $enabled_formats = OG_PSR_Settings::get( 'ogpsr_receipt_formats', array('thermal') );
             if ( !is_array( $enabled_formats ) ) {
-                $enabled_formats = ['thermal'];
+                $enabled_formats = array('thermal');
             }
             echo '<div class="ogpsr-order-list-actions-wrapper">';
             // 1. A4 Invoice
             if ( in_array( 'a4', $enabled_formats, true ) ) {
                 $a4_url = OG_PSR_Download_Handler::get_download_url( $order_id, 'a4' );
-                echo sprintf(
+                printf(
                     '<a href="%s" class="button ogpsr-list-btn ogpsr-btn-a4" target="_blank" title="%s"><span class="dashicons dashicons-pdf"></span> %s</a>',
                     esc_url( $a4_url ),
                     esc_attr__( 'Download A4 Invoice', 'semiauto-invoicing' ),
@@ -183,7 +183,7 @@ class OG_PSR_Order_List_Actions {
             // 2. Thermal Receipt
             if ( in_array( 'thermal', $enabled_formats, true ) ) {
                 $thermal_url = OG_PSR_Download_Handler::get_download_url( $order_id, 'thermal' );
-                echo sprintf(
+                printf(
                     '<a href="%s" class="button ogpsr-list-btn ogpsr-btn-thermal" target="_blank" title="%s"><span class="dashicons dashicons-printer"></span> %s</a>',
                     esc_url( $thermal_url ),
                     esc_attr__( 'Download Thermal Receipt', 'semiauto-invoicing' ),
@@ -193,7 +193,7 @@ class OG_PSR_Order_List_Actions {
             // 3. Packaging Slip
             if ( in_array( 'packaging', $enabled_formats, true ) ) {
                 $pkg_url = OG_PSR_Download_Handler::get_download_url( $order_id, 'packaging' );
-                echo sprintf(
+                printf(
                     '<a href="%s" class="button ogpsr-list-btn ogpsr-btn-pkg" target="_blank" title="%s"><span class="dashicons dashicons-archive"></span> %s</a>',
                     esc_url( $pkg_url ),
                     esc_attr__( 'Download Packaging Slip', 'semiauto-invoicing' ),

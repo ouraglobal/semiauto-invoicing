@@ -28,7 +28,7 @@ class OG_PSR_Activator {
      */
     public function init() {
         // Bind recurring daily cleanup event
-        add_action( 'ogpsr_daily_cleanup_event', [__CLASS__, 'execute_daily_cleanup'] );
+        add_action( 'ogpsr_daily_cleanup_event', array(__CLASS__, 'execute_daily_cleanup') );
     }
 
     /**
@@ -40,6 +40,7 @@ class OG_PSR_Activator {
             OG_PSR_Account_Hub::register_endpoint();
             update_option( 'ogpsr_rewrite_version', OG_PSR_VERSION );
         }
+        // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.flush_rewrite_rules_flush_rewrite_rules -- Executed strictly on plugin activation hook.
         flush_rewrite_rules( false );
         // 2. Schedule cleanup events
         if ( !wp_next_scheduled( 'ogpsr_daily_cleanup_event' ) ) {
@@ -94,12 +95,12 @@ class OG_PSR_Activator {
      * @return bool True if WooCommerce is active, false otherwise.
      */
     public function is_woocommerce_active() {
-        $active_plugins = (array) get_option( 'active_plugins', [] );
+        $active_plugins = (array) get_option( 'active_plugins', array() );
         if ( in_array( 'woocommerce/woocommerce.php', $active_plugins, true ) ) {
             return true;
         }
         if ( is_multisite() ) {
-            $active_sitewide_plugins = (array) get_site_option( 'active_sitewide_plugins', [] );
+            $active_sitewide_plugins = (array) get_site_option( 'active_sitewide_plugins', array() );
             if ( isset( $active_sitewide_plugins['woocommerce/woocommerce.php'] ) ) {
                 return true;
             }
@@ -132,28 +133,28 @@ class OG_PSR_Activator {
      * opt-in toggle in the plugin Storage settings.
      */
     public static function uninstall_cleanup() {
-        if ( get_option( 'ogpsr_delete_on_uninstall', 'no' ) !== 'yes' ) {
+        if ( 'yes' !== get_option( 'ogpsr_delete_on_uninstall', 'no' ) ) {
             return;
         }
         global $wpdb;
         // 1. Delete Options
         $like_options = $wpdb->esc_like( 'ogpsr_' ) . '%';
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Uninstall cleanup of plugin-prefixed rows (LIKE match); no core API deletes by key prefix.
         $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like_options ) );
         // 2. Delete Post Meta
         $like_pm_psr = $wpdb->esc_like( 'ogpsr_' ) . '%';
         $like_pm_upsr = $wpdb->esc_like( '_ogpsr_' ) . '%';
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Uninstall cleanup of plugin-prefixed rows (LIKE match); no core API deletes by key prefix.
         $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE %s OR meta_key LIKE %s", $like_pm_psr, $like_pm_upsr ) );
         // 3. HPOS Meta Cleanup
         $order_meta_table = "{$wpdb->prefix}wc_orders_meta";
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $order_meta_table ) ) === $order_meta_table ) {
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Uninstall cleanup of plugin-prefixed rows (LIKE match); no core API deletes by key prefix.
+        if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $order_meta_table ) ) === $order_meta_table ) {
             $like_psr = $wpdb->esc_like( 'ogpsr_' ) . '%';
             $like_upsr = $wpdb->esc_like( '_ogpsr_' ) . '%';
             // Table names cannot be parameterised via prepare(); esc_sql() is the correct hardening method here.
             $safe_table = esc_sql( $order_meta_table );
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Uninstall cleanup of plugin-prefixed rows (LIKE match); no core API deletes by key prefix.
             $wpdb->query( $wpdb->prepare( "DELETE FROM `{$safe_table}` WHERE meta_key LIKE %s OR meta_key LIKE %s", $like_psr, $like_upsr ) );
         }
         // 4. Delete Files (Strictly scoped to plugin's dedicated upload namespace)

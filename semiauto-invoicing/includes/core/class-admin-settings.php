@@ -19,68 +19,68 @@ require_once OG_PSR_PATH . 'includes/admin/class-settings-ajax.php';
 if ( !class_exists( 'OG_PSR_Settings' ) ) {
     class OG_PSR_Settings {
         /**
-         * Whitelisted sub-tab definitions: slug => [label, dashicon, method, premium_only]
+         * Whitelisted sub-tab definitions: slug => [label, dashicon, method]
          *
          * @return array
          */
         public static function get_sub_tabs() {
-            return [
-                'general'   => [
+            return array(
+                'general'   => array(
                     'label'  => __( 'General', 'semiauto-invoicing' ),
                     'icon'   => 'dashicons-admin-settings',
                     'method' => 'get_general_settings',
-                ],
-                'thermal'   => [
+                ),
+                'thermal'   => array(
                     'label'  => __( 'Thermal Receipt', 'semiauto-invoicing' ),
                     'icon'   => 'dashicons-printer',
                     'method' => 'get_thermal_settings',
-                ],
-                'a4'        => [
+                ),
+                'a4'        => array(
                     'label'  => __( 'A4 Documents', 'semiauto-invoicing' ),
                     'icon'   => 'dashicons-media-document',
                     'method' => 'get_a4_settings',
-                ],
-                'packaging' => [
+                ),
+                'packaging' => array(
                     'label'  => __( 'Packaging Slip', 'semiauto-invoicing' ),
                     'icon'   => 'dashicons-archive',
                     'method' => 'get_packaging_settings',
-                ],
-                'xml'       => [
+                ),
+                'xml'       => array(
                     'label'  => __( 'XML (Peppol)', 'semiauto-invoicing' ),
                     'icon'   => 'dashicons-code-standards',
                     'method' => 'get_xml_settings',
-                ],
-                'barcode'   => [
+                ),
+                'barcode'   => array(
                     'label'  => __( 'Barcode & QR', 'semiauto-invoicing' ),
                     'icon'   => 'dashicons-format-image',
                     'method' => 'get_barcode_settings',
-                ],
-                'design'    => [
+                ),
+                'design'    => array(
                     'label'  => __( 'Design & Style', 'semiauto-invoicing' ),
                     'icon'   => 'dashicons-art',
                     'method' => 'get_design_settings',
-                ],
-                'storage'   => [
+                ),
+                'storage'   => array(
                     'label'  => __( 'Storage', 'semiauto-invoicing' ),
                     'icon'   => 'dashicons-database',
                     'method' => 'get_storage_settings',
-                ],
-                'extras'    => [
+                ),
+                'extras'    => array(
                     'label'  => __( 'Extras', 'semiauto-invoicing' ),
                     'icon'   => 'dashicons-plus-alt',
                     'method' => 'get_extras_settings',
-                ],
-                'gateways'  => [
+                ),
+                'gateways'  => array(
                     'label'  => __( 'Peppol Gateways', 'semiauto-invoicing' ),
                     'icon'   => 'dashicons-admin-links',
                     'method' => 'get_gateways_settings',
-                ],
-                'status'    => [
+                ),
+                'status'    => array(
                     'label'  => __( 'Status & Diagnostics', 'semiauto-invoicing' ),
                     'icon'   => 'dashicons-info-outline',
                     'method' => 'get_status_settings',
-                ],
-            ];
+                ),
+            );
         }
 
         /**
@@ -89,9 +89,10 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
          * @return string
          */
         public static function get_active_section() {
+            // WooCommerce resolves and sanitizes the settings section on its settings screen.
+            global $current_section;
             $tabs = self::get_sub_tabs();
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            $section = ( isset( $_GET['section'] ) ? sanitize_key( wp_unslash( $_GET['section'] ) ) : 'general' );
+            $section = ( !empty( $current_section ) && is_string( $current_section ) ? sanitize_key( $current_section ) : 'general' );
             return ( array_key_exists( $section, $tabs ) ? $section : 'general' );
         }
 
@@ -99,20 +100,20 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
          * Initialize settings and AJAX hooks. Load admin subclasses.
          */
         public static function init() {
-            add_filter( 'woocommerce_settings_tabs_array', [__CLASS__, 'add_settings_tab'], 60 );
-            add_action( 'woocommerce_settings_tabs_pdf_smart_receipts', [__CLASS__, 'settings_tab'] );
-            add_action( 'woocommerce_update_options_pdf_smart_receipts', [__CLASS__, 'update_settings'] );
-            add_action( 'woocommerce_admin_field_ogpsr_image_upload', ['OG_PSR_Settings_Renderers', 'render_image_upload_field'] );
-            add_action( 'woocommerce_admin_field_ogpsr_system_status', ['OG_PSR_Settings_Renderers', 'render_system_status_field'] );
-            add_action( 'woocommerce_admin_field_ogpsr_compliance_disclaimer', ['OG_PSR_Settings_Renderers', 'render_compliance_disclaimer_field'] );
-            add_action( 'woocommerce_admin_field_ogpsr_showcase_banner', ['OG_PSR_Settings_Renderers', 'render_showcase_banner_field'] );
-            add_action( 'woocommerce_admin_field_ogpsr_compact_showcase_banner', ['OG_PSR_Settings_Renderers', 'render_compact_showcase_banner_field'] );
-            add_action( 'admin_enqueue_scripts', [__CLASS__, 'enqueue_admin_scripts'] );
-            add_action( 'admin_post_ogpsr_view_receipt', [__CLASS__, 'view_receipt_handler'] );
-            add_action( 'wp_ajax_ogpsr_sync_woo_details', ['OG_PSR_Settings_AJAX', 'sync_woo_details_ajax'] );
-            add_action( 'wp_ajax_ogpsr_purge_cache_ajax', ['OG_PSR_Settings_AJAX', 'purge_cache_ajax'] );
-            add_action( 'wp_ajax_ogpsr_ajax_save_settings', ['OG_PSR_Settings_AJAX', 'ajax_save_settings'] );
-            add_action( 'wp_ajax_ogpsr_regenerate_file', ['OG_PSR_Settings_AJAX', 'regenerate_file_ajax'] );
+            add_filter( 'woocommerce_settings_tabs_array', array(__CLASS__, 'add_settings_tab'), 60 );
+            add_action( 'woocommerce_settings_tabs_pdf_smart_receipts', array(__CLASS__, 'settings_tab') );
+            add_action( 'woocommerce_update_options_pdf_smart_receipts', array(__CLASS__, 'update_settings') );
+            add_action( 'woocommerce_admin_field_ogpsr_image_upload', array('OG_PSR_Settings_Renderers', 'render_image_upload_field') );
+            add_action( 'woocommerce_admin_field_ogpsr_system_status', array('OG_PSR_Settings_Renderers', 'render_system_status_field') );
+            add_action( 'woocommerce_admin_field_ogpsr_compliance_disclaimer', array('OG_PSR_Settings_Renderers', 'render_compliance_disclaimer_field') );
+            add_action( 'woocommerce_admin_field_ogpsr_showcase_banner', array('OG_PSR_Settings_Renderers', 'render_showcase_banner_field') );
+            add_action( 'woocommerce_admin_field_ogpsr_compact_showcase_banner', array('OG_PSR_Settings_Renderers', 'render_compact_showcase_banner_field') );
+            add_action( 'admin_enqueue_scripts', array(__CLASS__, 'enqueue_admin_scripts') );
+            add_action( 'admin_post_ogpsr_view_receipt', array(__CLASS__, 'view_receipt_handler') );
+            add_action( 'wp_ajax_ogpsr_sync_woo_details', array('OG_PSR_Settings_AJAX', 'sync_woo_details_ajax') );
+            add_action( 'wp_ajax_ogpsr_purge_cache_ajax', array('OG_PSR_Settings_AJAX', 'purge_cache_ajax') );
+            add_action( 'wp_ajax_ogpsr_ajax_save_settings', array('OG_PSR_Settings_AJAX', 'ajax_save_settings') );
+            add_action( 'wp_ajax_ogpsr_regenerate_file', array('OG_PSR_Settings_AJAX', 'regenerate_file_ajax') );
         }
 
         /**
@@ -154,14 +155,14 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
             $section = self::get_active_section();
             $tabs = self::get_sub_tabs();
             $method = $tabs[$section]['method'];
-            $is_showcase = in_array( $section, [
+            $is_showcase = in_array( $section, array(
                 'xml',
                 'barcode',
                 'extras',
                 'gateways'
-            ], true );
-            $hide_preview = $is_showcase || in_array( $section, ['status', 'gateways', 'storage'], true );
-            $layout_classes = [];
+            ), true );
+            $hide_preview = $is_showcase || in_array( $section, array('status', 'gateways', 'storage'), true );
+            $layout_classes = array();
             if ( $hide_preview ) {
                 $layout_classes[] = 'ogpsr-hide-preview';
             }
@@ -206,12 +207,12 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
         /**
          * Retrieves a plugin option with default fallback.
          *
-         * @param string $key     Option key name.
-         * @param mixed  $default Default value if option is not set.
+         * @param string $key           Option key name.
+         * @param mixed  $default_value Default value if option is not set.
          * @return mixed Option value or fallback default.
          */
-        public static function get( $key, $default = '' ) {
-            return get_option( $key, $default );
+        public static function get( $key, $default_value = '' ) {
+            return get_option( $key, $default_value );
         }
 
         /**
@@ -231,26 +232,29 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
         public static function view_receipt_handler() {
             if ( !current_user_can( 'manage_woocommerce' ) && !current_user_can( 'manage_options' ) && !current_user_can( 'edit_shop_orders' ) ) {
                 OG_PSR_Logger::warning( __( 'Unauthorized administrative document view attempt.', 'semiauto-invoicing' ) );
-                wp_die( esc_html__( 'Unauthorized access.', 'semiauto-invoicing' ) );
+                wp_die( esc_html__( 'Unauthorized access.', 'semiauto-invoicing' ), esc_html__( 'Forbidden', 'semiauto-invoicing' ), array(
+                    'response' => 403,
+                ) );
             }
             check_admin_referer( 'ogpsr_view_receipt' );
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             $filename = ( isset( $_GET['file'] ) ? sanitize_file_name( wp_unslash( $_GET['file'] ) ) : '' );
             $file_ext = strtolower( pathinfo( $filename, PATHINFO_EXTENSION ) );
-            $is_pdf = $file_ext === 'pdf';
+            $is_pdf = 'pdf' === $file_ext;
             $is_valid_format = $is_pdf;
             if ( empty( $filename ) || !$is_valid_format ) {
-                wp_die( esc_html__( 'Invalid or missing file.', 'semiauto-invoicing' ) );
+                wp_die( esc_html__( 'Invalid or missing file.', 'semiauto-invoicing' ), esc_html__( 'Bad Request', 'semiauto-invoicing' ), array(
+                    'response' => 400,
+                ) );
             }
             $upload_dir = wp_upload_dir();
             $base_dir = ( class_exists( 'OG_PSR_Security' ) ? OG_PSR_Security::resolve_upload_root() : wp_normalize_path( $upload_dir['basedir'] . '/semiauto-invoicing' ) );
-            $possible_paths = [];
+            $possible_paths = array();
             if ( class_exists( 'OG_PSR_Document_Registry' ) ) {
                 foreach ( OG_PSR_Document_Registry::get_all_subdirs() as $subdir ) {
                     $possible_paths[] = $base_dir . '/' . $subdir . '/' . $filename;
                 }
             } else {
-                $possible_paths = [$base_dir . '/thermal-receipts/' . $filename, $base_dir . '/invoices/pdf/' . $filename, $base_dir . '/packaging-slips/' . $filename];
+                $possible_paths = array($base_dir . '/thermal-receipts/' . $filename, $base_dir . '/invoices/pdf/' . $filename, $base_dir . '/packaging-slips/' . $filename);
             }
             global $wp_filesystem;
             if ( empty( $wp_filesystem ) ) {
@@ -270,10 +274,11 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
             }
             // Self-healing fallback: If exact filename was not found (e.g. hash changed after regeneration), attempt directory scan or dynamic generation
             if ( empty( $file_path ) ) {
-                if ( preg_match( '/^([a-z0-9_-]+?)-(\\d+)(?:-([a-f0-9]+))?\\.(pdf|xml|json)$/i', $filename, $matches ) ) {
+                $valid_ext_pattern = 'pdf';
+                if ( preg_match( '/^([a-z0-9_-]+?)-(\\d+)(?:-([a-f0-9]+))?\\.(' . $valid_ext_pattern . ')$/i', $filename, $matches ) ) {
                     $prefix_type = strtolower( $matches[1] );
                     $extracted_order_id = absint( $matches[2] );
-                    $ext = strtolower( $matches[4] );
+                    $ext = strtolower( $matches[4] ?? 'pdf' );
                     // 1. Scan candidate directories for existing file matching {type}-{order_id}*.{ext}
                     foreach ( $possible_paths as $candidate_path ) {
                         $parent_dir = dirname( $candidate_path );
@@ -327,20 +332,46 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
             if ( $file_path && $wp_filesystem && $wp_filesystem->exists( $file_path ) && class_exists( 'OG_PSR_Security' ) && OG_PSR_Security::is_path_within( $file_path, $base_dir ) ) {
                 $content_type = 'application/pdf';
                 header( 'Content-Type: ' . $content_type );
-                // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified via check_admin_referer('ogpsr_view_receipt') at method entry.
-                $disposition = ( isset( $_GET['download'] ) && $_GET['download'] === '1' ? 'attachment' : 'inline' );
+                $disposition = ( isset( $_GET['download'] ) && '1' === $_GET['download'] ? 'attachment' : 'inline' );
                 header( 'Content-Disposition: ' . $disposition . '; filename="' . $filename . '"' );
                 header( 'Content-Transfer-Encoding: binary' );
                 header( 'Accept-Ranges: bytes' );
-                header( 'Cache-Control: private, max-age=0, must-revalidate' );
-                header( 'Pragma: public' );
+                header( 'Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0' );
+                header( 'Pragma: no-cache' );
                 /* translators: 1: disposition action (viewed/downloaded), 2: filename */
                 OG_PSR_Logger::info( sprintf( __( 'Admin %1$s document: %2$s', 'semiauto-invoicing' ), $disposition, $filename ) );
-                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Binary file stream (PDF/XML/ZIP download); escaping would corrupt the file.
                 echo $wp_filesystem->get_contents( $file_path );
                 exit;
             } else {
-                wp_die( esc_html__( 'Receipt file not found.', 'semiauto-invoicing' ) );
+                wp_die( esc_html__( 'Receipt file not found.', 'semiauto-invoicing' ), esc_html__( 'Not Found', 'semiauto-invoicing' ), array(
+                    'response' => 404,
+                ) );
+            }
+        }
+
+        /**
+         * Register the document and live preview stylesheets.
+         *
+         * Single source of truth for the preview style handles, shared by the admin
+         * enqueue and the live preview AJAX renderer so both always load identical assets.
+         */
+        public static function register_preview_styles() {
+            if ( !wp_style_is( 'ogpsr-document-template', 'registered' ) ) {
+                wp_register_style(
+                    'ogpsr-document-template',
+                    OG_PSR_URL . 'assets/css/ogpsr-document-template.css',
+                    array(),
+                    OG_PSR_VERSION
+                );
+            }
+            if ( !wp_style_is( 'ogpsr-preview', 'registered' ) ) {
+                wp_register_style(
+                    'ogpsr-preview',
+                    OG_PSR_URL . 'assets/css/ogpsr-preview.css',
+                    array('ogpsr-document-template'),
+                    OG_PSR_VERSION
+                );
             }
         }
 
@@ -352,45 +383,35 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
             if ( !$screen ) {
                 return;
             }
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            $tab = ( isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '' );
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            $page = ( isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '' );
-            $is_settings = $tab === 'pdf_smart_receipts' || $page === 'wc-settings' && $tab === 'pdf_smart_receipts' || isset( $screen->id ) && strpos( $screen->id, 'wc-settings' ) !== false && $tab === 'pdf_smart_receipts';
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            $post_id = ( isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0 );
-            $post_type = ( !empty( $screen->post_type ) ? $screen->post_type : (( $post_id ? get_post_type( $post_id ) : '' )) );
-            $is_order = in_array( $post_type, ['shop_order', 'shop_order_refund'], true ) || isset( $screen->id ) && (strpos( $screen->id, 'wc-orders' ) !== false || strpos( $screen->id, 'shop_order' ) !== false || $screen->id === 'edit-shop_order') || $page === 'wc-orders';
+            // WooCommerce resolves and sanitizes the active settings tab on its settings screen.
+            global $current_tab;
+            $tab = ( is_string( $current_tab ) ? $current_tab : '' );
+            $is_settings = isset( $screen->id ) && false !== strpos( $screen->id, 'wc-settings' ) && 'pdf_smart_receipts' === $tab;
+            $post_type = ( !empty( $screen->post_type ) ? $screen->post_type : '' );
+            $is_order = in_array( $post_type, array('shop_order', 'shop_order_refund'), true ) || isset( $screen->id ) && (false !== strpos( $screen->id, 'wc-orders' ) || false !== strpos( $screen->id, 'shop_order' ) || 'edit-shop_order' === $screen->id);
             if ( !$is_settings && !$is_order && 'widgets' !== $screen->id ) {
                 return;
             }
             wp_enqueue_media();
-            wp_enqueue_style(
-                'ogpsr-document-template',
-                OG_PSR_URL . 'assets/css/ogpsr-document-template.css',
-                [],
-                OG_PSR_VERSION
-            );
-            wp_enqueue_style(
-                'ogpsr-preview',
-                OG_PSR_URL . 'assets/css/ogpsr-preview.css',
-                ['ogpsr-document-template'],
-                OG_PSR_VERSION
-            );
+            self::register_preview_styles();
+            wp_enqueue_style( 'ogpsr-document-template' );
+            wp_enqueue_style( 'ogpsr-preview' );
             wp_enqueue_style(
                 'ogpsr-admin-style',
                 OG_PSR_URL . 'assets/css/ogpsr-admin.css',
-                ['ogpsr-document-template', 'ogpsr-preview'],
+                array('ogpsr-document-template', 'ogpsr-preview'),
                 OG_PSR_VERSION
             );
             wp_enqueue_script(
                 'ogpsr-admin-script',
                 OG_PSR_URL . 'assets/js/ogpsr-admin.js',
-                ['jquery', 'wp-util'],
+                array('jquery', 'wp-util'),
                 OG_PSR_VERSION,
                 true
             );
-            $script_data = [
+            /* translators: %s: HTTP status code */
+            $preview_network_error = __( 'Server or Network Error (Code: %s)', 'semiauto-invoicing' );
+            $script_data = array(
                 'ajax_url'        => admin_url( 'admin-ajax.php' ),
                 'manager_nonce'   => wp_create_nonce( 'ogpsr_manager_nonce' ),
                 'preview_nonce'   => wp_create_nonce( 'ogpsr_preview_nonce' ),
@@ -399,7 +420,7 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
                 'purge_nonce'     => wp_create_nonce( 'ogpsr_purge_cache_nonce' ),
                 'sync_nonce'      => wp_create_nonce( 'ogpsr_sync_nonce' ),
                 'debug'           => defined( 'WP_DEBUG' ) && WP_DEBUG,
-                'strings'         => [
+                'strings'         => array(
                     'regenerating'             => __( 'Regenerating...', 'semiauto-invoicing' ),
                     'regenerate'               => __( 'Regenerate', 'semiauto-invoicing' ),
                     'saving'                   => __( 'Saving...', 'semiauto-invoicing' ),
@@ -422,12 +443,15 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
                     'confirm_delete'           => __( 'Are you sure you want to delete this receipt file?', 'semiauto-invoicing' ),
                     'generated'                => __( 'Status: Generated', 'semiauto-invoicing' ),
                     'download'                 => __( 'Download', 'semiauto-invoicing' ),
-                ],
+                    'preview_failed'           => __( 'Preview Failed', 'semiauto-invoicing' ),
+                    'preview_unknown_error'    => __( 'Unknown Preview Error', 'semiauto-invoicing' ),
+                    'preview_network_error'    => $preview_network_error,
+                ),
                 'base_country'    => (function () {
                     $country = ( WC()->countries ? WC()->countries->get_base_country() : get_option( 'woocommerce_default_country', 'AE' ) );
                     return ( $country ? strtoupper( explode( ':', $country )[0] ) : 'AE' );
                 })(),
-            ];
+            );
             wp_localize_script( 'ogpsr-admin-script', 'ogpsr_admin_data', $script_data );
         }
 

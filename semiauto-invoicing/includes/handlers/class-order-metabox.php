@@ -17,7 +17,7 @@ if ( !class_exists( 'OG_PSR_Order_Metabox' ) ) {
          * Register hooks and actions.
          */
         public function __construct() {
-            add_action( 'add_meta_boxes', [$this, 'add_metabox'] );
+            add_action( 'add_meta_boxes', array($this, 'add_metabox') );
         }
 
         /**
@@ -27,7 +27,7 @@ if ( !class_exists( 'OG_PSR_Order_Metabox' ) ) {
             add_meta_box(
                 'ogpsr_pdf_controls',
                 __( 'Receipt & Invoice Documents', 'semiauto-invoicing' ),
-                [$this, 'render_metabox'],
+                array($this, 'render_metabox'),
                 'shop_order',
                 'side',
                 'default'
@@ -36,7 +36,7 @@ if ( !class_exists( 'OG_PSR_Order_Metabox' ) ) {
             add_meta_box(
                 'ogpsr_pdf_controls',
                 __( 'Receipt & Invoice Documents', 'semiauto-invoicing' ),
-                [$this, 'render_metabox'],
+                array($this, 'render_metabox'),
                 'woocommerce_page_wc-orders',
                 'side',
                 'default'
@@ -55,14 +55,14 @@ if ( !class_exists( 'OG_PSR_Order_Metabox' ) ) {
                 return;
             }
             $order_id = $order->get_id();
-            $enabled_formats = OG_PSR_Settings::get( 'ogpsr_receipt_formats', ['thermal'] );
+            $enabled_formats = OG_PSR_Settings::get( 'ogpsr_receipt_formats', array('thermal') );
             if ( !is_array( $enabled_formats ) ) {
-                $enabled_formats = ['thermal'];
+                $enabled_formats = array('thermal');
             }
             $store_details_changed = self::has_store_details_changed( $order );
             wp_nonce_field( 'ogpsr_regenerate_file', 'ogpsr_regenerate_nonce' );
             echo '<div class="ogpsr-pdf-controls">';
-            if ( in_array( 'thermal', $enabled_formats ) ) {
+            if ( in_array( 'thermal', $enabled_formats, true ) ) {
                 $thermal_exists = $this->check_pdf_exists( $order, 'thermal' );
                 echo '<div class="ogpsr-pdf-item" data-format="thermal">';
                 echo '  <div class="ogpsr-pdf-title">';
@@ -96,7 +96,7 @@ if ( !class_exists( 'OG_PSR_Order_Metabox' ) ) {
                 echo '  </div>';
                 echo '</div>';
             }
-            if ( in_array( 'a4', $enabled_formats ) ) {
+            if ( in_array( 'a4', $enabled_formats, true ) ) {
                 $a4_exists = $this->check_pdf_exists( $order, 'a4' );
                 echo '<div class="ogpsr-pdf-item" data-format="a4">';
                 echo '  <div class="ogpsr-pdf-title">';
@@ -129,7 +129,7 @@ if ( !class_exists( 'OG_PSR_Order_Metabox' ) ) {
                 echo '  </div>';
                 echo '</div>';
             }
-            if ( in_array( 'packaging', $enabled_formats ) ) {
+            if ( in_array( 'packaging', $enabled_formats, true ) ) {
                 $pkg_exists = $this->check_pdf_exists( $order, 'packaging' );
                 echo '<div class="ogpsr-pdf-item" data-format="packaging">';
                 echo '  <div class="ogpsr-pdf-title">';
@@ -191,7 +191,7 @@ if ( !class_exists( 'OG_PSR_Order_Metabox' ) ) {
             }
             $base_dir = ( class_exists( 'OG_PSR_Security' ) ? OG_PSR_Security::resolve_upload_root() : wp_normalize_path( wp_upload_dir()['basedir'] . '/semiauto-invoicing' ) );
             $dir = $base_dir . '/' . $subdir;
-            $existing = [];
+            $existing = array();
             global $wp_filesystem;
             if ( empty( $wp_filesystem ) ) {
                 require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -203,7 +203,7 @@ if ( !class_exists( 'OG_PSR_Order_Metabox' ) ) {
                     $file_prefix = $prefix . $order->get_id() . '-';
                     foreach ( $dir_list as $file_info ) {
                         $name = $file_info['name'];
-                        if ( strpos( $name, $file_prefix ) === 0 && substr( $name, -4 ) === '.pdf' ) {
+                        if ( 0 === strpos( $name, $file_prefix ) && '.pdf' === substr( $name, -4 ) ) {
                             $candidate_file = $dir . '/' . $name;
                             if ( class_exists( 'OG_PSR_Document_Registry' ) && OG_PSR_Document_Registry::validate_document_file( $candidate_file, $format ) ) {
                                 $existing[] = $candidate_file;
@@ -235,11 +235,11 @@ if ( !class_exists( 'OG_PSR_Order_Metabox' ) ) {
             }
             $generated_sig = $order->get_meta( '_ogpsr_generated_store_sig', true );
             if ( !empty( $generated_sig ) ) {
-                return $generated_sig !== OG_PSR_PDF_Generator::get_current_store_signature();
+                return OG_PSR_PDF_Generator::get_current_store_signature() !== $generated_sig;
             }
             $generated_country = $order->get_meta( '_ogpsr_generated_store_country', true );
             if ( !empty( $generated_country ) ) {
-                return $generated_country !== OG_PSR_PDF_Generator::get_current_store_country();
+                return OG_PSR_PDF_Generator::get_current_store_country() !== $generated_country;
             }
             return false;
         }

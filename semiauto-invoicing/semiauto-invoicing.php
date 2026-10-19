@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Plugin Name:       semiauto-invoicing
+ * Plugin Name:       SemiAuto Invoicing
  * Plugin URI:        https://ouraglobal.ae/semiauto-invoicing/
- * Description:       Local PDFs & Global E-Invoicing compliance assistant with thermal receipts (44mm–80mm), professional PDF invoices, and packaging slips for WooCommerce.
- * Version:           8.4.2
+ * Description:       Local PDFs & Global E-Invoicing compliance assistant. Thermal receipts (44–80mm), PDF invoices, and packaging slips for WooCommerce.
+ * Version:           8.4.7
  * Author:            ouraglobal
  * Contributors:      salmansh169
  * Author URI:        https://ouraglobal.ae/
@@ -15,7 +15,7 @@
  * Requires PHP:      8.0
  * Requires Plugins:  woocommerce
  * WC requires at least: 10.0.0
- * WC tested up to:   11.2.0
+ * WC tested up to:   11.2.1
  */
 if ( !defined( 'ABSPATH' ) ) {
     exit;
@@ -39,8 +39,8 @@ if ( function_exists( 'ogpsr_fs' ) ) {
                         define( 'WP_FS__PRODUCT_23702_MULTISITE', true );
                     }
                 }
-                require_once dirname( __FILE__ ) . '/vendor/freemius/start.php';
-                $ogpsr_fs = fs_dynamic_init( [
+                require_once __DIR__ . '/vendor/freemius/start.php';
+                $ogpsr_fs = fs_dynamic_init( array(
                     'id'               => '23702',
                     'slug'             => 'semiauto-invoicing',
                     'premium_slug'     => 'semiauto-invoicing-premium',
@@ -50,16 +50,16 @@ if ( function_exists( 'ogpsr_fs' ) ) {
                     'premium_suffix'   => 'Premium',
                     'has_paid_plans'   => true,
                     'is_org_compliant' => true,
-                    'menu'             => [
+                    'menu'             => array(
                         'slug'           => 'wc-settings',
                         'override_exact' => true,
                         'support'        => false,
-                        'parent'         => [
+                        'parent'         => array(
                             'slug' => 'woocommerce',
-                        ],
-                    ],
+                        ),
+                    ),
                     'is_live'          => true,
-                ] );
+                ) );
             }
             return $ogpsr_fs;
         }
@@ -79,7 +79,7 @@ if ( function_exists( 'ogpsr_fs' ) ) {
         ogpsr_fs()->add_filter( 'after_connect_url', 'ogpsr_fs_settings_url' );
         ogpsr_fs()->add_filter( 'after_pending_connect_url', 'ogpsr_fs_settings_url' );
         ogpsr_fs()->add_filter( 'pricing_url', 'ogpsr_fs_pricing_url' );
-        ogpsr_fs()->add_action( 'after_uninstall', ['OG_PSR_Activator', 'uninstall_cleanup'] );
+        ogpsr_fs()->add_action( 'after_uninstall', array('OG_PSR_Activator', 'uninstall_cleanup') );
     }
     // fs_init_end
     /**
@@ -92,7 +92,7 @@ if ( function_exists( 'ogpsr_fs' ) ) {
     } );
     // Define core constants
     if ( !defined( 'OG_PSR_VERSION' ) ) {
-        define( 'OG_PSR_VERSION', '8.4.2' );
+        define( 'OG_PSR_VERSION', '8.4.7' );
     }
     if ( !defined( 'OG_PSR_PATH' ) ) {
         define( 'OG_PSR_PATH', plugin_dir_path( __FILE__ ) );
@@ -107,11 +107,11 @@ if ( function_exists( 'ogpsr_fs' ) ) {
         return;
     }
     // Register WordPress Lifecycle Hooks in the root loading scope per WP.org requirements
-    register_activation_hook( OG_PSR_FILE, ['OG_PSR_Activator', 'activate'] );
-    register_deactivation_hook( OG_PSR_FILE, ['OG_PSR_Activator', 'deactivate'] );
+    register_activation_hook( OG_PSR_FILE, array('OG_PSR_Activator', 'activate') );
+    register_deactivation_hook( OG_PSR_FILE, array('OG_PSR_Activator', 'deactivate') );
     // Action links on plugins page
     add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), function ( $links ) {
-        $custom = ['<a href="https://ouraglobal.ae/semiauto-invoicing/documentation/" target="_blank">' . __( 'Documentation', 'semiauto-invoicing' ) . '</a>'];
+        $custom = array('<a href="https://ouraglobal.ae/semiauto-invoicing/documentation/" target="_blank">' . __( 'Documentation', 'semiauto-invoicing' ) . '</a>');
         return array_merge( $custom, $links );
     } );
     // --- 4. CORE INITIALIZATION ---
@@ -165,7 +165,7 @@ if ( function_exists( 'ogpsr_fs' ) ) {
                 'woocommerce_currency_symbol',
                 function ( $symbol, $currency ) {
                     $mode = get_option( 'ogpsr_currency_display_mode', 'symbol' );
-                    return ( $mode === 'code' ? $currency : $symbol );
+                    return ( 'code' === $mode ? $currency : $symbol );
                 },
                 999,
                 2

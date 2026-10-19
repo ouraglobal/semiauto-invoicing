@@ -16,52 +16,52 @@ if ( !class_exists( 'OG_PSR_Document_Registry' ) ) {
         /**
          * Canonical Free Document Types
          */
-        const FREE_DOCUMENT_TYPES = ['invoice', 'thermal_receipt', 'packaging_slip'];
+        const FREE_DOCUMENT_TYPES = array('invoice', 'thermal_receipt', 'packaging_slip');
 
         /**
          * Format to Canonical Document Type Mapping
          */
-        const FREE_FORMATS = [
+        const FREE_FORMATS = array(
             'a4'        => 'invoice',
             'thermal'   => 'thermal_receipt',
             'packaging' => 'packaging_slip',
-        ];
+        );
 
         /**
          * Storage Subdirectory Mapping for Free Document Types
          */
-        const FREE_STORAGE_SUBDIRS = [
+        const FREE_STORAGE_SUBDIRS = array(
             'invoice'         => 'invoices/pdf',
             'thermal_receipt' => 'thermal-receipts',
             'packaging_slip'  => 'packaging-slips',
-        ];
+        );
 
         /**
          * Order Meta Key Mapping (Format Alias => Meta Key)
          */
-        const FREE_META_KEYS = [
+        const FREE_META_KEYS = array(
             'thermal'   => '_ogpsr_thermal_path',
             'a4'        => '_ogpsr_a4_path',
             'packaging' => '_ogpsr_packaging_path',
-        ];
+        );
 
         /**
          * Filename Prefix Mapping (Format Alias => Prefix)
          */
-        const FREE_FILENAME_PREFIXES = [
+        const FREE_FILENAME_PREFIXES = array(
             'thermal'   => 'thermal-',
             'a4'        => 'invoice-',
             'packaging' => 'packaging-',
-        ];
+        );
 
         /**
          * Storage Subdirectory Mapping by Format Alias
          */
-        const FREE_STORAGE_BY_FORMAT = [
+        const FREE_STORAGE_BY_FORMAT = array(
             'thermal'   => 'thermal-receipts',
             'a4'        => 'invoices/pdf',
             'packaging' => 'packaging-slips',
-        ];
+        );
 
         /**
          * Check if document type is supported in Free Core
@@ -70,7 +70,8 @@ if ( !class_exists( 'OG_PSR_Document_Registry' ) ) {
          * @return bool
          */
         public static function is_supported_type( $type ) {
-            return in_array( $type, self::FREE_DOCUMENT_TYPES, true );
+            $is_supported = in_array( $type, self::FREE_DOCUMENT_TYPES, true );
+            return $is_supported;
         }
 
         /**
@@ -80,7 +81,8 @@ if ( !class_exists( 'OG_PSR_Document_Registry' ) ) {
          * @return bool
          */
         public static function is_supported_format( $format ) {
-            return array_key_exists( $format, self::FREE_FORMATS );
+            $is_supported = array_key_exists( $format, self::FREE_FORMATS );
+            return $is_supported;
         }
 
         /**
@@ -111,7 +113,8 @@ if ( !class_exists( 'OG_PSR_Document_Registry' ) ) {
          * @return string|false
          */
         public static function get_storage_subdir( $doc_type ) {
-            return self::FREE_STORAGE_SUBDIRS[$doc_type] ?? false;
+            $subdir = self::FREE_STORAGE_SUBDIRS[$doc_type] ?? false;
+            return $subdir;
         }
 
         /**
@@ -162,13 +165,9 @@ if ( !class_exists( 'OG_PSR_Document_Registry' ) ) {
             return self::FREE_FORMATS;
         }
 
-        /**
-         * Get all Free storage subdirectories
-         *
-         * @return array
-         */
         public static function get_all_subdirs() {
-            return array_values( self::FREE_STORAGE_SUBDIRS );
+            $subdirs = array_values( self::FREE_STORAGE_SUBDIRS );
+            return $subdirs;
         }
 
         /**
@@ -183,14 +182,14 @@ if ( !class_exists( 'OG_PSR_Document_Registry' ) ) {
         /**
          * Canonical list of allowed PDF typography fonts across all document engines
          */
-        const ALLOWED_FONTS = [
+        const ALLOWED_FONTS = array(
             'DejaVu Sans',
             'Courier',
             'Helvetica',
             'Times',
             'Verdana',
             'Arial'
-        ];
+        );
 
         /**
          * Get canonical list of allowed fonts
@@ -223,7 +222,7 @@ if ( !class_exists( 'OG_PSR_Document_Registry' ) ) {
          * @return bool
          */
         public static function is_email_attachable( $format ) {
-            return in_array( $format, ['thermal', 'a4', 'packaging'], true );
+            return in_array( $format, array('thermal', 'a4', 'packaging'), true );
         }
 
         /**
@@ -233,7 +232,7 @@ if ( !class_exists( 'OG_PSR_Document_Registry' ) ) {
          * @return array List of lowercased allowed extensions (e.g. ['pdf'])
          */
         public static function get_allowed_extensions( $format = '' ) {
-            $allowed = ['pdf'];
+            $allowed = array('pdf');
             return $allowed;
         }
 

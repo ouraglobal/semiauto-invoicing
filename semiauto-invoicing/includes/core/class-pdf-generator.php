@@ -67,7 +67,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             if ( empty( $country ) ) {
                 $country = get_option( 'woocommerce_default_country', '' );
             }
-            if ( strpos( (string) $country, ':' ) !== false ) {
+            if ( false !== strpos( (string) $country, ':' ) ) {
                 $country = explode( ':', (string) $country )[0];
             }
             return strtoupper( trim( (string) $country ) );
@@ -81,7 +81,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
         public static function get_current_store_signature() {
             $country = self::get_current_store_country();
             $name = OG_PSR_Settings::get( 'ogpsr_business_name', get_bloginfo( 'name' ) );
-            $tax_id = ( (( OG_PSR_Settings::get( 'ogpsr_xml_tax_id' ) ?: OG_PSR_Settings::get( 'ogpsr_vat_number' ) )) ?: OG_PSR_Settings::get( 'ogpsr_trn_number' ) );
+            $tax_id = ( OG_PSR_Settings::get( 'ogpsr_xml_tax_id' ) ? OG_PSR_Settings::get( 'ogpsr_xml_tax_id' ) : (( OG_PSR_Settings::get( 'ogpsr_vat_number' ) ? OG_PSR_Settings::get( 'ogpsr_vat_number' ) : OG_PSR_Settings::get( 'ogpsr_trn_number' ) )) );
             return md5( $country . '|' . $name . '|' . $tax_id );
         }
 
@@ -125,7 +125,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 }
             }
             // 2. Check third-party POS / tender metadata (Chwazi, FooSales, Oliver, YITH POS, Actuality)
-            $pos_payment_keys = [
+            $pos_payment_keys = array(
                 '_chwazi_payment_method_title',
                 '_chwazi_payment_method',
                 '_chwazi_tender_type',
@@ -137,7 +137,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 '_pos_payment_method',
                 '_yith_pos_payment_title',
                 '_yith_pos_payment_method'
-            ];
+            );
             foreach ( $pos_payment_keys as $key ) {
                 $pos_val = $source->get_meta( $key );
                 if ( !empty( $pos_val ) ) {
@@ -157,7 +157,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                     }
                 }
                 // 4. Standard WooCommerce & POS Gateway Slugs Map
-                $standard_map = [
+                $standard_map = array(
                     'bacs'       => __( 'Direct Bank Transfer', 'semiauto-invoicing' ),
                     'cheque'     => __( 'Check Payments', 'semiauto-invoicing' ),
                     'cod'        => __( 'Cash on Delivery', 'semiauto-invoicing' ),
@@ -168,12 +168,12 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                     'chwazi_pos' => __( 'Chwazi POS', 'semiauto-invoicing' ),
                     'foosales'   => __( 'FooSales POS', 'semiauto-invoicing' ),
                     'oliver_pos' => __( 'Oliver POS', 'semiauto-invoicing' ),
-                ];
+                );
                 if ( isset( $standard_map[$method_slug] ) ) {
                     return $standard_map[$method_slug];
                 }
                 // 5. Pretty formatted slug
-                return ucwords( str_replace( ['_', '-'], ' ', $method_slug ) );
+                return ucwords( str_replace( array('_', '-'), ' ', $method_slug ) );
             }
             return '';
         }
@@ -184,7 +184,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
          */
         public function filter_currency_symbol( $symbol, $currency ) {
             $mode = OG_PSR_Settings::get( 'ogpsr_currency_display_mode', 'symbol' );
-            return ( $mode === 'code' ? $currency : $symbol );
+            return ( 'code' === $mode ? $currency : $symbol );
         }
 
         public static function get_logo_base64() {
@@ -196,7 +196,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             $transient_key = 'ogpsr_logo_b64_cache_' . $attachment_id . '_' . OG_PSR_VERSION;
             if ( !self::$is_preview ) {
                 $cached_logo = get_transient( $transient_key );
-                if ( $cached_logo !== false ) {
+                if ( false !== $cached_logo ) {
                     return $cached_logo;
                 }
             }
@@ -250,19 +250,19 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             if ( function_exists( 'wc_set_time_limit' ) ) {
                 wc_set_time_limit( 300 );
             }
-            $formats = OG_PSR_Settings::get( 'ogpsr_receipt_formats', ['thermal'] );
+            $formats = OG_PSR_Settings::get( 'ogpsr_receipt_formats', array('thermal') );
             if ( !is_array( $formats ) ) {
-                $formats = ['thermal'];
+                $formats = array('thermal');
             }
-            $files = [];
+            $files = array();
             $order = wc_get_order( $order_id );
             if ( !$order ) {
-                return [];
+                return array();
             }
             // Apply ISO Currency filter if enabled
             add_filter(
                 'woocommerce_currency_symbol',
-                [$this, 'filter_currency_symbol'],
+                array($this, 'filter_currency_symbol'),
                 999,
                 2
             );
@@ -274,26 +274,26 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             if ( empty( $invoice_number ) ) {
                 $invoice_number = (string) (( method_exists( $order, 'get_order_number' ) ? $order->get_order_number() : $order->get_id() ));
             }
-            if ( in_array( 'thermal', $formats ) ) {
+            if ( in_array( 'thermal', $formats, true ) ) {
                 $thermal_file = $this->generate_thermal( $order_id, $invoice_number );
                 if ( $thermal_file ) {
                     $files[] = $thermal_file;
                 }
             }
-            if ( in_array( 'a4', $formats ) ) {
+            if ( in_array( 'a4', $formats, true ) ) {
                 $a4_file = $this->generate_a4( $order_id, $invoice_number );
                 if ( $a4_file ) {
                     $files[] = $a4_file;
                 }
             }
-            if ( in_array( 'packaging', $formats ) ) {
+            if ( in_array( 'packaging', $formats, true ) ) {
                 $pkg_file = $this->generate_packaging( $order_id, $invoice_number );
                 if ( $pkg_file ) {
                     $files[] = $pkg_file;
                 }
             }
             // Clean up filter
-            remove_filter( 'woocommerce_currency_symbol', [$this, 'filter_currency_symbol'], 999 );
+            remove_filter( 'woocommerce_currency_symbol', array($this, 'filter_currency_symbol'), 999 );
             return $files;
         }
 
@@ -316,7 +316,8 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 }
             }
             // Clear metadata to ensure fresh generation storage
-            if ( $order = wc_get_order( $order_id ) ) {
+            $order = wc_get_order( $order_id );
+            if ( $order ) {
                 $order->delete_meta_data( '_ogpsr_thermal_path' );
                 $order->save();
             }
@@ -378,7 +379,8 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 }
             }
             // Clear metadata to ensure fresh generation storage
-            if ( $order = wc_get_order( $order_id ) ) {
+            $order = wc_get_order( $order_id );
+            if ( $order ) {
                 $order->delete_meta_data( '_ogpsr_packaging_path' );
                 $order->save();
             }
@@ -394,7 +396,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
          * @return string 8-character hash
          */
         public static function get_document_settings_signature( $doc_type, $order_or_id ) {
-            $hash_data = [
+            $hash_data = array(
                 $doc_type,
                 ( class_exists( 'OG_PSR_Document_Registry' ) ? OG_PSR_Document_Registry::sanitize_font_family( OG_PSR_Settings::get( 'ogpsr_font_family', 'DejaVu Sans' ) ) : 'DejaVu Sans' ),
                 OG_PSR_Settings::get( 'ogpsr_font_size', 9 ),
@@ -406,12 +408,12 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 OG_PSR_Settings::get( 'ogpsr_business_postcode', '' ),
                 OG_PSR_Settings::get( 'ogpsr_business_contact', '' ),
                 OG_PSR_Settings::get( 'ogpsr_logo_attachment_id', 0 ),
-                OG_PSR_Settings::get( 'ogpsr_customer_info_fields', [] ),
+                OG_PSR_Settings::get( 'ogpsr_customer_info_fields', array() ),
                 OG_PSR_Settings::get( 'ogpsr_currency_display_mode', 'symbol' ),
                 OG_PSR_Settings::get( 'ogpsr_header_text', '' ),
                 OG_PSR_Settings::get( 'ogpsr_footer_text', '' )
-            ];
-            if ( $doc_type === 'thermal' ) {
+            );
+            if ( 'thermal' === $doc_type ) {
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_paper_width', '57' );
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_thermal_terms_and_conditions', '' );
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_show_tax_inclusion_line', 'yes' );
@@ -419,18 +421,18 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_thermal_show_product_meta', 'yes' );
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_thermal_show_cashier', 'no' );
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_thermal_cashier_name', '' );
-            } elseif ( $doc_type === 'invoice' ) {
+            } elseif ( 'invoice' === $doc_type ) {
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_a4_show_due_date', 'yes' );
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_a4_payment_terms', '30' );
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_show_bank_details', 'yes' );
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_force_bank_details', 'no' );
-                $hash_data[] = OG_PSR_Settings::get( 'ogpsr_selected_bank_accounts', [] );
+                $hash_data[] = OG_PSR_Settings::get( 'ogpsr_selected_bank_accounts', array() );
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_a4_show_product_ean', 'no' );
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_a4_show_product_sku', 'no' );
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_a4_show_coupon_codes', 'yes' );
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_a4_terms_and_conditions', '' );
             }
-            return substr( md5( serialize( $hash_data ) ), 0, 8 );
+            return substr( md5( (string) wp_json_encode( $hash_data ) ), 0, 8 );
         }
 
         /**
@@ -454,7 +456,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             }
             // Validate destination file extension
             $ext = strtolower( pathinfo( $destination_path, PATHINFO_EXTENSION ) );
-            $valid_ext = $ext === 'pdf';
+            $valid_ext = 'pdf' === $ext;
             if ( !$valid_ext ) {
                 return false;
             }
@@ -462,7 +464,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             $raw_dir = dirname( $destination_path );
             $safe_filename = basename( $destination_path );
             $trusted_dir = ( class_exists( 'OG_PSR_Security' ) ? OG_PSR_Security::establish_trusted_directory( $raw_dir ) : (( function_exists( 'wp_mkdir_p' ) ? ( wp_mkdir_p( $raw_dir ) ? realpath( $raw_dir ) : false ) : false )) );
-            if ( $trusted_dir === false || empty( $trusted_dir ) ) {
+            if ( false === $trusted_dir || empty( $trusted_dir ) ) {
                 OG_PSR_Logger::error( 'Failed to establish trusted destination directory for document publishing.' );
                 return false;
             }
@@ -489,7 +491,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 return false;
             }
             $written = $fs->put_contents( $tmp_file, $content );
-            if ( !$written || !$fs->exists( $tmp_file ) || (int) $fs->size( $tmp_file ) === 0 ) {
+            if ( !$written || !$fs->exists( $tmp_file ) || 0 === (int) $fs->size( $tmp_file ) ) {
                 if ( $fs->exists( $tmp_file ) ) {
                     $fs->delete( $tmp_file );
                 }
@@ -511,9 +513,9 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                     $ext_suffix = '.' . $ext;
                     foreach ( $dir_list as $file_info ) {
                         $name = $file_info['name'];
-                        if ( strpos( $name, $cleanup_prefix ) === 0 && substr( $name, -strlen( $ext_suffix ) ) === $ext_suffix ) {
+                        if ( 0 === strpos( $name, $cleanup_prefix ) && substr( $name, -strlen( $ext_suffix ) ) === $ext_suffix ) {
                             $old_file = $dir . '/' . $name;
-                            if ( $old_file !== $destination_path && strpos( $old_file, '.tmp.' ) === false && $fs->exists( $old_file ) ) {
+                            if ( $old_file !== $destination_path && false === strpos( $old_file, '.tmp.' ) && $fs->exists( $old_file ) ) {
                                 if ( class_exists( 'OG_PSR_Security' ) && OG_PSR_Security::is_path_within( $old_file, OG_PSR_Security::resolve_upload_root() ) ) {
                                     $fs->delete( $old_file );
                                 }
@@ -533,6 +535,13 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
          */
         public function generate_thermal( $order_id, $invoice_number = '' ) {
             $dir = ( class_exists( 'OG_PSR_Security' ) ? OG_PSR_Security::resolve_document_root( 'thermal_receipt' ) : wp_normalize_path( wp_upload_dir()['basedir'] . '/semiauto-invoicing/thermal-receipts' ) );
+            // Fail closed before cached PDFs can be returned or new files generated.
+            if ( !class_exists( 'OG_PSR_Security' ) || !OG_PSR_Security::ensure_directory_security( $dir ) ) {
+                if ( class_exists( 'OG_PSR_Logger' ) ) {
+                    OG_PSR_Logger::error( 'Storage protection could not be verified; PDF generation was stopped.', $order_id );
+                }
+                return null;
+            }
             // Compute centralized settings hash for cache-busting (PHASE2-CACHE-001)
             $settings_hash = self::get_document_settings_signature( 'thermal', $order_id );
             $file = $dir . '/thermal-' . $order_id . '-' . $settings_hash . '.pdf';
@@ -557,7 +566,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             // Apply ISO Currency filter if enabled
             add_filter(
                 'woocommerce_currency_symbol',
-                [$this, 'filter_currency_symbol'],
+                array($this, 'filter_currency_symbol'),
                 999,
                 2
             );
@@ -570,7 +579,9 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             ob_start();
             $template_path = OG_PSR_Template_Registry::get_template_path();
             if ( $fs && $fs->exists( $template_path ) ) {
-                include $template_path;
+                load_template( $template_path, false, array(
+                    'doc' => $doc,
+                ) );
             }
             $html = ob_get_clean();
             // Strip TranslatePress-specific tags (#!trpst# and #!trpen#) to ensure clean HTML for PDF rendering.
@@ -578,12 +589,12 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             $options = $this->get_dompdf_options( 72 );
             $dompdf = new Dompdf($options);
             $height_mm = 500;
-            $dompdf->setPaper( [
+            $dompdf->setPaper( array(
                 0,
                 0,
                 $this->mm_to_pt( $paper_width_mm ),
                 $this->mm_to_pt( $height_mm )
-            ], 'portrait' );
+            ), 'portrait' );
             try {
                 // Minify HTML whitespace to optimize Dompdf FrameTree memory usage
                 $html = preg_replace( '/>\\s+</', '><', trim( $html ) );
@@ -616,12 +627,12 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 return null;
             } finally {
                 // Always remove the currency filter and free memory resources
-                remove_filter( 'woocommerce_currency_symbol', [$this, 'filter_currency_symbol'], 999 );
+                remove_filter( 'woocommerce_currency_symbol', array($this, 'filter_currency_symbol'), 999 );
                 if ( isset( $dompdf ) ) {
                     unset($dompdf);
                 }
             }
-            if ( OG_PSR_Settings::get( 'ogpsr_enable_activity_logging', 'no' ) === 'yes' ) {
+            if ( 'yes' === OG_PSR_Settings::get( 'ogpsr_enable_activity_logging', 'no' ) ) {
                 /* translators: %s: Order ID */
                 OG_PSR_Logger::info( sprintf( __( 'Thermal Receipt successfully generated for Order #%s', 'semiauto-invoicing' ), $order_id ) );
             }
@@ -643,6 +654,13 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             $doc_type = 'invoice';
             $dir = ( class_exists( 'OG_PSR_Security' ) ? OG_PSR_Security::resolve_document_root( 'invoice' ) : wp_normalize_path( $upload_root . '/invoices/pdf' ) );
             $file_prefix = 'invoice-' . $order_id . '-';
+            // Verify the final target, including Premium credit-note routing, before cache lookup.
+            if ( !class_exists( 'OG_PSR_Security' ) || !OG_PSR_Security::ensure_directory_security( $dir ) ) {
+                if ( class_exists( 'OG_PSR_Logger' ) ) {
+                    OG_PSR_Logger::error( 'Storage protection could not be verified; PDF generation was stopped.', $order_id );
+                }
+                return null;
+            }
             // Compute centralized settings hash for active document type
             $settings_hash = self::get_document_settings_signature( $doc_type, $order_id );
             $file = $dir . '/' . $file_prefix . $settings_hash . '.pdf';
@@ -665,7 +683,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             // Apply ISO Currency filter if enabled
             add_filter(
                 'woocommerce_currency_symbol',
-                [$this, 'filter_currency_symbol'],
+                array($this, 'filter_currency_symbol'),
                 999,
                 2
             );
@@ -679,7 +697,9 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             // Resolve presentation template path via Template Registry
             $template_path = OG_PSR_Template_Registry::get_template_path();
             if ( $fs && $fs->exists( $template_path ) ) {
-                include $template_path;
+                load_template( $template_path, false, array(
+                    'doc' => $doc,
+                ) );
             }
             $html = ob_get_clean();
             // Strip TranslatePress-specific tags to prevent rendering artifacts in the final PDF.
@@ -700,18 +720,18 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 $dompdf->render();
                 // Inject dynamic page numbering on canvas ({PAGE_NUM} / {PAGE_COUNT})
                 $canvas = $dompdf->getCanvas();
-                $fontMetrics = $dompdf->getFontMetrics();
-                $page_font = ( $fontMetrics ? $fontMetrics->getFont( 'DejaVu Sans', 'normal' ) : null );
-                if ( $canvas && $fontMetrics && $page_font ) {
-                    $page_num_str = "{PAGE_NUM} / {PAGE_COUNT}";
-                    $calc_width = $fontMetrics->getTextWidth( "88 / 88", $page_font, 8 );
+                $font_metrics = $dompdf->getFontMetrics();
+                $page_font = ( $font_metrics ? $font_metrics->getFont( 'DejaVu Sans', 'normal' ) : null );
+                if ( $canvas && $font_metrics && $page_font ) {
+                    $page_num_str = '{PAGE_NUM} / {PAGE_COUNT}';
+                    $calc_width = $font_metrics->getTextWidth( '88 / 88', $page_font, 8 );
                     $canvas->page_text(
                         $canvas->get_width() - 40 - $calc_width,
                         $canvas->get_height() - 25,
                         $page_num_str,
                         $page_font,
                         8,
-                        [0.5, 0.5, 0.5]
+                        array(0.5, 0.5, 0.5)
                     );
                 }
                 $pdf_output = $dompdf->output();
@@ -735,12 +755,12 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 return null;
             } finally {
                 // Always remove the currency filter and free memory resources
-                remove_filter( 'woocommerce_currency_symbol', [$this, 'filter_currency_symbol'], 999 );
+                remove_filter( 'woocommerce_currency_symbol', array($this, 'filter_currency_symbol'), 999 );
                 if ( isset( $dompdf ) ) {
                     unset($dompdf);
                 }
             }
-            if ( OG_PSR_Settings::get( 'ogpsr_enable_activity_logging', 'no' ) === 'yes' ) {
+            if ( 'yes' === OG_PSR_Settings::get( 'ogpsr_enable_activity_logging', 'no' ) ) {
                 /* translators: %s: Order ID */
                 OG_PSR_Logger::info( sprintf( __( 'A4 Invoice successfully generated for Order #%s', 'semiauto-invoicing' ), $order_id ) );
             }
@@ -755,6 +775,13 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
          */
         public function generate_packaging( $order_id, $invoice_number = '' ) {
             $dir = ( class_exists( 'OG_PSR_Security' ) ? OG_PSR_Security::resolve_document_root( 'packaging_slip' ) : wp_normalize_path( wp_upload_dir()['basedir'] . '/semiauto-invoicing/packaging-slips' ) );
+            // Fail closed before cached PDFs can be returned or new files generated.
+            if ( !class_exists( 'OG_PSR_Security' ) || !OG_PSR_Security::ensure_directory_security( $dir ) ) {
+                if ( class_exists( 'OG_PSR_Logger' ) ) {
+                    OG_PSR_Logger::error( 'Storage protection could not be verified; PDF generation was stopped.', $order_id );
+                }
+                return null;
+            }
             // Compute centralized settings hash for Packaging-specific settings (PHASE2-CACHE-001)
             $settings_hash = self::get_document_settings_signature( 'packaging', $order_id );
             $file = $dir . '/packaging-' . $order_id . '-' . $settings_hash . '.pdf';
@@ -779,7 +806,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             // Apply ISO Currency filter if enabled
             add_filter(
                 'woocommerce_currency_symbol',
-                [$this, 'filter_currency_symbol'],
+                array($this, 'filter_currency_symbol'),
                 999,
                 2
             );
@@ -791,7 +818,9 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             ob_start();
             $template_path = OG_PSR_Template_Registry::get_template_path();
             if ( $fs && $fs->exists( $template_path ) ) {
-                include $template_path;
+                load_template( $template_path, false, array(
+                    'doc' => $doc,
+                ) );
             }
             $html = ob_get_clean();
             // Strip TranslatePress-specific tags to prevent rendering artifacts in the final PDF.
@@ -812,18 +841,18 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 $dompdf->render();
                 // Inject dynamic page numbering on canvas ({PAGE_NUM} / {PAGE_COUNT})
                 $canvas = $dompdf->getCanvas();
-                $fontMetrics = $dompdf->getFontMetrics();
-                $page_font = ( $fontMetrics ? $fontMetrics->getFont( 'DejaVu Sans', 'normal' ) : null );
-                if ( $canvas && $fontMetrics && $page_font ) {
-                    $page_num_str = "{PAGE_NUM} / {PAGE_COUNT}";
-                    $calc_width = $fontMetrics->getTextWidth( "88 / 88", $page_font, 8 );
+                $font_metrics = $dompdf->getFontMetrics();
+                $page_font = ( $font_metrics ? $font_metrics->getFont( 'DejaVu Sans', 'normal' ) : null );
+                if ( $canvas && $font_metrics && $page_font ) {
+                    $page_num_str = '{PAGE_NUM} / {PAGE_COUNT}';
+                    $calc_width = $font_metrics->getTextWidth( '88 / 88', $page_font, 8 );
                     $canvas->page_text(
                         $canvas->get_width() - 40 - $calc_width,
                         $canvas->get_height() - 25,
                         $page_num_str,
                         $page_font,
                         8,
-                        [0.5, 0.5, 0.5]
+                        array(0.5, 0.5, 0.5)
                     );
                 }
                 $pdf_output = $dompdf->output();
@@ -847,12 +876,12 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 return null;
             } finally {
                 // Always remove the currency filter and free memory resources
-                remove_filter( 'woocommerce_currency_symbol', [$this, 'filter_currency_symbol'], 999 );
+                remove_filter( 'woocommerce_currency_symbol', array($this, 'filter_currency_symbol'), 999 );
                 if ( isset( $dompdf ) ) {
                     unset($dompdf);
                 }
             }
-            if ( OG_PSR_Settings::get( 'ogpsr_enable_activity_logging', 'no' ) === 'yes' ) {
+            if ( 'yes' === OG_PSR_Settings::get( 'ogpsr_enable_activity_logging', 'no' ) ) {
                 /* translators: %s: Order ID */
                 OG_PSR_Logger::info( sprintf( __( 'Packaging Slip successfully generated for Order #%s', 'semiauto-invoicing' ), $order_id ) );
             }
@@ -893,13 +922,13 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
          */
         public function match_files_fs( $dir, $prefix, $extension = '.pdf' ) {
             $fs = $this->init_filesystem();
-            $matches = [];
+            $matches = array();
             if ( $fs && $fs->is_dir( $dir ) ) {
                 $dir_list = $fs->dirlist( $dir );
                 if ( is_array( $dir_list ) ) {
                     foreach ( $dir_list as $file_info ) {
                         $name = $file_info['name'];
-                        if ( strpos( $name, $prefix ) === 0 && substr( $name, -strlen( $extension ) ) === $extension ) {
+                        if ( 0 === strpos( $name, $prefix ) && substr( $name, -strlen( $extension ) ) === $extension ) {
                             $matches[] = $dir . '/' . $name;
                         }
                     }
@@ -996,7 +1025,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             $options->set( 'fontDir', $font_dir );
             $options->set( 'fontCache', $font_dir );
             // Phase 2: Local chroot Asset Resolution
-            $chroot = [WP_CONTENT_DIR, OG_PSR_PATH];
+            $chroot = array(WP_CONTENT_DIR, OG_PSR_PATH);
             $options->set( 'chroot', $chroot );
             return $options;
         }

@@ -3,10 +3,6 @@
  * Externalized for WordPress Marketplace compliance (Zero Inline Styles Rule).
  */
 
-:root {
-    --ogpsr-scale: 0.45; /* Dynamic scale factor computed by JS */
-}
-
 /* ============================================================
    Base iframe body reset & canvas container
    ============================================================ */
@@ -31,7 +27,10 @@ body.ogpsr-preview-body {
     text-align: left !important;
 }
 
-*, *:before, *:after {
+/* Scoped to the preview document (zero-specificity :where) so these resets never affect the parent admin page. */
+:where(.ogpsr-preview-html) *,
+:where(.ogpsr-preview-html) *:before,
+:where(.ogpsr-preview-html) *:after {
     box-sizing: inherit !important;
 }
 
@@ -53,18 +52,19 @@ body.ogpsr-format-packaging {
    Thermal POS Roll Dimensions (44mm, 57mm, 58mm, 76mm, 80mm)
    ============================================================ */
 body.ogpsr-format-thermal {
-    padding: 5mm !important;
+    padding: 4mm 5mm !important;
     text-align: left !important;
     transform-origin: top center !important;
     transform: scale(var(--ogpsr-scale, 1)) !important;
-    margin: 10px auto !important;
+    margin: 12px auto calc((var(--ogpsr-scale, 1) - 1) * 100% + 25px) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
 }
 
-html[data-ogpsr-width="80mm"] body.ogpsr-format-thermal { width: 80mm !important; min-width: 80mm !important; }
-html[data-ogpsr-width="76mm"] body.ogpsr-format-thermal { width: 76mm !important; min-width: 76mm !important; }
-html[data-ogpsr-width="58mm"] body.ogpsr-format-thermal { width: 58mm !important; min-width: 58mm !important; }
-html[data-ogpsr-width="57mm"] body.ogpsr-format-thermal { width: 57mm !important; min-width: 57mm !important; }
-html[data-ogpsr-width="44mm"] body.ogpsr-format-thermal { width: 44mm !important; min-width: 44mm !important; }
+html[data-ogpsr-width="80mm"] body.ogpsr-format-thermal { width: 80mm !important; }
+html[data-ogpsr-width="76mm"] body.ogpsr-format-thermal { width: 76mm !important; }
+html[data-ogpsr-width="58mm"] body.ogpsr-format-thermal { width: 58mm !important; }
+html[data-ogpsr-width="57mm"] body.ogpsr-format-thermal { width: 57mm !important; }
+html[data-ogpsr-width="44mm"] body.ogpsr-format-thermal { width: 44mm !important; }
 
 /* Thermal Header & Footer Centering */
 .ogpsr-format-thermal .ogpsr-thermal-header {
@@ -81,14 +81,14 @@ html[data-ogpsr-width="44mm"] body.ogpsr-format-thermal { width: 44mm !important
 }
 
 /* Force high-res images */
-img {
+:where(.ogpsr-preview-html) img {
     max-width: 100%;
     height: auto;
     image-rendering: -webkit-optimize-contrast;
 }
 
 /* Hide print-only elements in preview */
-.no-print {
+:where(.ogpsr-preview-html) .no-print {
     display: none !important;
 }
 

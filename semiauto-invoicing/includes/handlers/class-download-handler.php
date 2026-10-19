@@ -13,7 +13,7 @@ if ( !class_exists( 'OG_PSR_Download_Handler' ) ) {
          * Initialize hooks
          */
         public function __construct() {
-            add_action( 'init', [$this, 'handle_download'] );
+            add_action( 'init', array($this, 'handle_download') );
         }
 
         /**
@@ -25,21 +25,27 @@ if ( !class_exists( 'OG_PSR_Download_Handler' ) ) {
             }
             $order_id = intval( wp_unslash( $_GET['ogpsr_download_order'] ) );
             $format = sanitize_key( wp_unslash( $_GET['format'] ) );
-            // thermal|a4|packaging
+            // Expected values: thermal, a4 or packaging.
             $nonce = sanitize_text_field( wp_unslash( $_GET['nonce'] ) );
             // Verify nonce
             if ( !wp_verify_nonce( $nonce, 'ogpsr_download_' . $order_id . '_' . $format ) ) {
-                wp_die( esc_html__( 'Security check failed', 'semiauto-invoicing' ), 403 );
+                wp_die( esc_html__( 'Security check failed', 'semiauto-invoicing' ), esc_html__( 'Forbidden', 'semiauto-invoicing' ), array(
+                    'response' => 403,
+                ) );
             }
             $order = wc_get_order( $order_id );
             if ( !$order ) {
-                wp_die( esc_html__( 'Order not found.', 'semiauto-invoicing' ), 404 );
+                wp_die( esc_html__( 'Order not found.', 'semiauto-invoicing' ), esc_html__( 'Not Found', 'semiauto-invoicing' ), array(
+                    'response' => 404,
+                ) );
             }
             // Enforce central security barrier: admin capabilities or matching logged-in customer (strict denial for guests)
             if ( !class_exists( 'OG_PSR_Security' ) || !OG_PSR_Security::can_access_order_document( $order, $format ) ) {
                 /* translators: 1: Order ID, 2: Document format */
                 OG_PSR_Logger::warning( sprintf( __( 'Unauthorized document download attempt for Order #%1$d (format: %2$s)', 'semiauto-invoicing' ), $order_id, $format ), $order_id );
-                wp_die( esc_html__( 'You do not have permission to download this file', 'semiauto-invoicing' ), 403 );
+                wp_die( esc_html__( 'You do not have permission to download this file', 'semiauto-invoicing' ), esc_html__( 'Forbidden', 'semiauto-invoicing' ), array(
+                    'response' => 403,
+                ) );
             }
             // Find the file using the generator's existence logic
             $generator = new OG_PSR_PDF_Generator();
@@ -98,7 +104,7 @@ if ( !class_exists( 'OG_PSR_Download_Handler' ) ) {
             header( 'Content-Disposition: attachment; filename="' . basename( $file_path ) . '"' );
             $file_size = ( !empty( $wp_filesystem ) ? $wp_filesystem->size( $file_path ) : 0 );
             header( 'Content-Length: ' . $file_size );
-            header( 'Cache-Control: private, no-transform, max-age=0, must-revalidate' );
+            header( 'Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0' );
             header( 'Pragma: no-cache' );
             header( 'X-Robots-Tag: noindex, nofollow, noarchive' );
             if ( !empty( $wp_filesystem ) && $wp_filesystem->exists( $file_path ) ) {
@@ -106,7 +112,7 @@ if ( !class_exists( 'OG_PSR_Download_Handler' ) ) {
                 OG_PSR_Logger::info( sprintf( __( 'Order document downloaded: %1$s (format: %2$s)', 'semiauto-invoicing' ), basename( $file_path ), $format ), $order_id );
                 // Use WP_Filesystem to read the file contents — this is the WordPress-compliant method.
                 // Reviewer Comment: Outputting the binary stream for the PDF file download. Binary content must be output raw.
-                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Binary file stream (PDF/XML/ZIP download); escaping would corrupt the file.
                 echo $wp_filesystem->get_contents( $file_path );
             } else {
                 // Should not happen given the early check, but added for safety.
@@ -127,11 +133,11 @@ if ( !class_exists( 'OG_PSR_Download_Handler' ) ) {
          */
         public static function get_download_url( $order_id, $format ) {
             $nonce = wp_create_nonce( 'ogpsr_download_' . $order_id . '_' . $format );
-            $args = [
+            $args = array(
                 'ogpsr_download_order' => $order_id,
                 'format'               => $format,
                 'nonce'                => $nonce,
-            ];
+            );
             return add_query_arg( $args, home_url() );
         }
 

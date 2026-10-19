@@ -9,11 +9,11 @@ if ( !defined( 'ABSPATH' ) ) {
  * @package SemiAutoInvoicing
  */
 final class OG_PSR_Document_Trigger_Manager {
-    private const DOCUMENT_SETTINGS = [
+    private const DOCUMENT_SETTINGS = array(
         'thermal'   => 'ogpsr_thermal_generation_trigger',
         'a4'        => 'ogpsr_a4_generation_trigger',
         'packaging' => 'ogpsr_packaging_generation_trigger',
-    ];
+    );
 
     /**
      * Register hooks dynamically based on store settings
@@ -21,7 +21,7 @@ final class OG_PSR_Document_Trigger_Manager {
     public static function init() {
         foreach ( self::DOCUMENT_SETTINGS as $document_type => $setting_key ) {
             $status = sanitize_key( OG_PSR_Settings::get( $setting_key, '' ) );
-            if ( $status === '' ) {
+            if ( '' === $status ) {
                 continue;
             }
             add_action( 'woocommerce_order_status_' . $status, function ( $order_id ) use($document_type) {
@@ -31,7 +31,7 @@ final class OG_PSR_Document_Trigger_Manager {
         // REST API Order Creation Trigger
         add_action(
             'woocommerce_rest_insert_shop_order_object',
-            [__CLASS__, 'handle_rest_order_creation'],
+            array(__CLASS__, 'handle_rest_order_creation'),
             20,
             3
         );
@@ -51,7 +51,7 @@ final class OG_PSR_Document_Trigger_Manager {
         $order_status = $order->get_status();
         foreach ( self::DOCUMENT_SETTINGS as $document_type => $setting_key ) {
             $status = sanitize_key( OG_PSR_Settings::get( $setting_key, '' ) );
-            if ( $status !== '' && $status === $order_status ) {
+            if ( '' !== $status && $status === $order_status ) {
                 self::generate_document( $order->get_id(), $document_type );
             }
         }

@@ -990,17 +990,23 @@ table.form-table tr:has(.ogpsr-compact-showcase-banner) td {
     background: #fff;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
     position: relative;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 302px;
+    width: 100%;
     margin: 0 auto;
     height: auto;
 }
 
-.ogpsr-preview-iframe-wrapper[data-ogpsr-preview-width="80mm"] { width: 302px; }
-.ogpsr-preview-iframe-wrapper[data-ogpsr-preview-width="76mm"] { width: 287px; }
-.ogpsr-preview-iframe-wrapper[data-ogpsr-preview-width="58mm"] { width: 219px; }
-.ogpsr-preview-iframe-wrapper[data-ogpsr-preview-width="57mm"] { width: 215px; }
-.ogpsr-preview-iframe-wrapper[data-ogpsr-preview-width="44mm"] { width: 166px; }
+/* Width transitions are enabled after the first preview render to avoid an initial resize animation. */
+.ogpsr-preview-iframe-wrapper.ogpsr-preview-animated {
+    transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Thermal roll widths are proportional to the 80mm roll, which fills the canvas. */
+.ogpsr-preview-iframe-wrapper[data-ogpsr-preview-width="80mm"] { width: 100%; }
+.ogpsr-preview-iframe-wrapper[data-ogpsr-preview-width="76mm"] { width: 95%; }
+.ogpsr-preview-iframe-wrapper[data-ogpsr-preview-width="58mm"] { width: 72.5%; }
+.ogpsr-preview-iframe-wrapper[data-ogpsr-preview-width="57mm"] { width: 71.25%; }
+.ogpsr-preview-iframe-wrapper[data-ogpsr-preview-width="44mm"] { width: 55%; }
+
 .ogpsr-preview-iframe-wrapper[data-ogpsr-preview-width="100%"],
 .ogpsr-preview-iframe-wrapper[data-ogpsr-preview-width="a4"],
 .ogpsr-preview-iframe-wrapper[data-ogpsr-preview-width="packaging"],
@@ -1010,6 +1016,21 @@ table.form-table tr:has(.ogpsr-compact-showcase-banner) td {
     width: 100%;
     border: none;
     display: block;
+    opacity: 1;
+    transition: opacity 0.15s ease-out;
+}
+
+/* Hide the incoming document instantly until its styles, scale and height are applied (no flicker, height stays reserved). */
+.ogpsr-preview-iframe-wrapper.ogpsr-preview-swapping #ogpsr-preview-iframe {
+    opacity: 0;
+    transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ogpsr-preview-iframe-wrapper.ogpsr-preview-animated,
+    #ogpsr-preview-iframe {
+        transition: none;
+    }
 }
 
 .ogpsr-preview-loader {

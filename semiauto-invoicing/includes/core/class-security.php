@@ -41,7 +41,7 @@ if ( !class_exists( 'OG_PSR_Security' ) ) {
          */
         public static function resolve_document_root( $doc_type ) {
             $upload_root = self::resolve_upload_root();
-            $subdir = OG_PSR_Document_Registry::get_storage_subdir( $doc_type );
+            $subdir = ( class_exists( 'OG_PSR_Document_Registry' ) ? OG_PSR_Document_Registry::get_storage_subdir( $doc_type ) : false );
             if ( $subdir ) {
                 return wp_normalize_path( $upload_root . '/' . $subdir );
             }
@@ -63,18 +63,18 @@ if ( !class_exists( 'OG_PSR_Security' ) ) {
                 return false;
             }
             // Reject null-bytes, stream wrappers, and URI schemes
-            if ( strpos( $dir, "\x00" ) !== false || preg_match( '/^[a-zA-Z0-9\\+\\.\\-]+:\\/\\//', $dir ) ) {
+            if ( false !== strpos( $dir, "\x00" ) || preg_match( '/^[a-zA-Z0-9\\+\\.\\-]+:\\/\\//', $dir ) ) {
                 return false;
             }
             $upload_root = self::resolve_upload_root();
             $real_upload_root = realpath( $upload_root );
-            if ( $real_upload_root === false ) {
+            if ( false === $real_upload_root ) {
                 // Ensure upload root exists and re-resolve
                 if ( function_exists( 'wp_mkdir_p' ) ) {
                     wp_mkdir_p( $upload_root );
                 }
                 $real_upload_root = realpath( $upload_root );
-                if ( $real_upload_root === false ) {
+                if ( false === $real_upload_root ) {
                     return false;
                 }
             }
@@ -89,13 +89,13 @@ if ( !class_exists( 'OG_PSR_Security' ) ) {
             }
             // Canonicalize the directory path
             $real_dir = realpath( $normalized_dir );
-            if ( $real_dir === false || !is_dir( $real_dir ) ) {
+            if ( false === $real_dir || !is_dir( $real_dir ) ) {
                 return false;
             }
             $real_dir_normalized = wp_normalize_path( $real_dir );
             $real_dir_slash = rtrim( $real_dir_normalized, '/' ) . '/';
             // Strict directory-boundary containment comparison against trusted upload root
-            if ( strpos( $real_dir_slash, $real_root_slash ) !== 0 ) {
+            if ( 0 !== strpos( $real_dir_slash, $real_root_slash ) ) {
                 // Fail closed: directory resolves outside upload root (e.g. symlink traversal)
                 return false;
             }
@@ -114,7 +114,7 @@ if ( !class_exists( 'OG_PSR_Security' ) ) {
                 return false;
             }
             // Reject null-bytes
-            if ( strpos( $candidate, "\x00" ) !== false ) {
+            if ( false !== strpos( $candidate, "\x00" ) ) {
                 return false;
             }
             // Reject stream wrappers and URI schemes (e.g. phar://, php://, file://)
@@ -128,7 +128,7 @@ if ( !class_exists( 'OG_PSR_Security' ) ) {
             $normalized_base = wp_normalize_path( $base_dir );
             // Resolve real base path
             $real_base = realpath( $normalized_base );
-            if ( $real_base === false ) {
+            if ( false === $real_base ) {
                 // If base dir doesn't exist yet, check directory structure directly
                 $real_base = $normalized_base;
             } else {
@@ -137,30 +137,30 @@ if ( !class_exists( 'OG_PSR_Security' ) ) {
             $real_base = rtrim( $real_base, '/' ) . '/';
             // Resolve real candidate path
             $real_candidate = realpath( $normalized_candidate );
-            if ( $real_candidate === false ) {
+            if ( false === $real_candidate ) {
                 // If the path contains traversal sequences ('..'), it MUST resolve cleanly with realpath()
-                if ( strpos( $normalized_candidate, '..' ) !== false ) {
+                if ( false !== strpos( $normalized_candidate, '..' ) ) {
                     return false;
                 }
                 // If the file/directory doesn't exist yet, walk up ancestor tree to find closest existing directory
                 $check_dir = dirname( $normalized_candidate );
                 $real_ancestor = false;
-                $unresolved_tail = [];
-                while ( !empty( $check_dir ) && $check_dir !== '.' && $check_dir !== '/' && $check_dir !== '\\' ) {
+                $unresolved_tail = array();
+                while ( !empty( $check_dir ) && '.' !== $check_dir && '/' !== $check_dir && '\\' !== $check_dir ) {
                     $resolved = realpath( $check_dir );
-                    if ( $resolved !== false ) {
+                    if ( false !== $resolved ) {
                         $real_ancestor = wp_normalize_path( $resolved );
                         break;
                     }
                     $unresolved_tail[] = basename( $check_dir );
                     $check_dir = dirname( $check_dir );
                 }
-                if ( $real_ancestor === false ) {
+                if ( false === $real_ancestor ) {
                     // Fail closed if no existing directory ancestor can be resolved
                     return false;
                 }
                 // Verify the resolved existing ancestor is strictly within the real base directory
-                if ( strpos( $real_ancestor . '/', $real_base ) !== 0 ) {
+                if ( 0 !== strpos( $real_ancestor . '/', $real_base ) ) {
                     return false;
                 }
                 // Reconstruct resolved path from existing ancestor + unresolved tail + filename
@@ -168,7 +168,7 @@ if ( !class_exists( 'OG_PSR_Security' ) ) {
             } else {
                 $real_candidate = wp_normalize_path( $real_candidate );
             }
-            return strpos( $real_candidate . '/', $real_base ) === 0;
+            return 0 === strpos( $real_candidate . '/', $real_base );
         }
 
         /**
@@ -185,13 +185,11 @@ if ( !class_exists( 'OG_PSR_Security' ) ) {
          */
         public static function can_access_order_document( $order_or_id, $format = 'a4' ) {
             // 0. Format Validation Barrier
-            if ( empty( $format ) || !is_string( $format ) || $format !== sanitize_key( $format ) ) {
+            if ( empty( $format ) || !is_string( $format ) || sanitize_key( $format ) !== $format ) {
                 return false;
             }
             $format = sanitize_key( $format );
             $is_supported = class_exists( 'OG_PSR_Document_Registry' ) && OG_PSR_Document_Registry::is_supported_format( $format );
-            if ( !$is_supported ) {
-            }
             if ( !$is_supported ) {
                 return false;
             }
@@ -232,13 +230,13 @@ if ( !class_exists( 'OG_PSR_Security' ) ) {
             }
             // Explicit MIME type allowlist for safe raster image formats (preventing SVG/XXE vectors in PDF rendering)
             $mime_type = get_post_mime_type( $attachment_id );
-            $allowed_mimes = [
+            $allowed_mimes = array(
                 'image/png',
                 'image/jpeg',
                 'image/jpg',
                 'image/gif',
                 'image/webp'
-            ];
+            );
             if ( !$mime_type || !in_array( $mime_type, $allowed_mimes, true ) ) {
                 return false;
             }
@@ -248,13 +246,13 @@ if ( !class_exists( 'OG_PSR_Security' ) ) {
             }
             // Verify safe file extension
             $filetype = wp_check_filetype( $file_path );
-            $allowed_exts = [
+            $allowed_exts = array(
                 'png',
                 'jpg',
                 'jpeg',
                 'gif',
                 'webp'
-            ];
+            );
             if ( empty( $filetype['ext'] ) || !in_array( strtolower( $filetype['ext'] ), $allowed_exts, true ) ) {
                 return false;
             }
@@ -287,58 +285,152 @@ if ( !class_exists( 'OG_PSR_Security' ) ) {
          * @param string $dir Target directory path. Defaults to plugin upload root.
          * @return bool True if directory exists and is secured, false otherwise.
          */
+        public static function is_protection_file_valid( $dir, $type ) {
+            if ( empty( $dir ) || !is_string( $dir ) || !in_array( $type, array('htaccess', 'webconfig'), true ) ) {
+                return false;
+            }
+            global $wp_filesystem;
+            if ( empty( $wp_filesystem ) ) {
+                require_once ABSPATH . 'wp-admin/includes/file.php';
+                if ( !WP_Filesystem() ) {
+                    return false;
+                }
+            }
+            if ( empty( $wp_filesystem ) ) {
+                return false;
+            }
+            $dir = wp_normalize_path( $dir );
+            $file = ( 'htaccess' === $type ? $dir . '/.htaccess' : $dir . '/web.config' );
+            if ( !$wp_filesystem->exists( $file ) || $wp_filesystem->is_dir( $file ) ) {
+                return false;
+            }
+            $contents = $wp_filesystem->get_contents( $file );
+            if ( !is_string( $contents ) || '' === trim( $contents ) ) {
+                return false;
+            }
+            if ( 'htaccess' === $type ) {
+                // Ignore commented examples; only active Apache deny directives count.
+                $active_contents = preg_replace( '/^[ \\t]*#.*$/m', '', $contents );
+                return (bool) preg_match( '/(^|\\n)\\s*Require\\s+all\\s+denied\\b/im', $active_contents ) || (bool) preg_match( '/(^|\\n)\\s*Deny\\s+from\\s+all\\b/im', $active_contents );
+            }
+            // IIS URL Authorization uses an <add accessType="Deny" users="*" /> rule.
+            // Ignore XML comments so commented-out examples cannot be mistaken for active rules.
+            $contents = preg_replace( '/<!--.*?-->/s', '', $contents );
+            $iis_rule_pattern = '/<\\s*security\\s*>.*?<\\s*authorization\\s*>.*?' . '<\\s*add\\b[^>]*\\baccessType\\s*=\\s*["\']Deny["\']' . '[^>]*\\busers\\s*=\\s*["\']\\s*\\*["\'][^>]*\\/?\\s*>' . '.*?<\\/\\s*authorization\\s*>.*?<\\/\\s*security\\s*>/is';
+            return (bool) preg_match( $iis_rule_pattern, $contents );
+        }
+
         public static function ensure_directory_security( $dir = '' ) {
             global $wp_filesystem;
             if ( empty( $wp_filesystem ) ) {
                 require_once ABSPATH . 'wp-admin/includes/file.php';
-                WP_Filesystem();
+                if ( !WP_Filesystem() ) {
+                    return false;
+                }
+            }
+            if ( empty( $wp_filesystem ) ) {
+                return false;
             }
             if ( empty( $dir ) ) {
                 $dir = self::resolve_upload_root();
             }
+            if ( !is_string( $dir ) || '' === trim( $dir ) || false !== strpos( $dir, "\x00" ) ) {
+                return false;
+            }
             $dir = wp_normalize_path( $dir );
-            if ( $wp_filesystem ) {
-                if ( !$wp_filesystem->exists( $dir ) ) {
-                    if ( function_exists( 'wp_mkdir_p' ) ) {
-                        wp_mkdir_p( $dir );
-                    } elseif ( !$wp_filesystem->mkdir( $dir ) ) {
-                        return false;
+            if ( !$wp_filesystem->is_dir( $dir ) ) {
+                if ( function_exists( 'wp_mkdir_p' ) ) {
+                    wp_mkdir_p( $dir );
+                } else {
+                    $wp_filesystem->mkdir( $dir );
+                }
+            }
+            if ( !$wp_filesystem->is_dir( $dir ) ) {
+                return false;
+            }
+            // Write each missing protection file and explicitly check each write result.
+            $htaccess_write_failed = false;
+            $web_config_write_failed = false;
+            $htaccess_file = $dir . '/.htaccess';
+            if ( !$wp_filesystem->exists( $htaccess_file ) ) {
+                $rules = "# Apache 2.4+ & LiteSpeed\n";
+                $rules .= "<IfModule mod_authz_core.c>\n";
+                $rules .= "    Require all denied\n";
+                $rules .= "</IfModule>\n";
+                $rules .= "# Apache 2.2\n";
+                $rules .= "<IfModule !mod_authz_core.c>\n";
+                $rules .= "    Deny from all\n";
+                $rules .= "</IfModule>\n";
+                $htaccess_written = $wp_filesystem->put_contents( $htaccess_file, $rules, FS_CHMOD_FILE );
+                if ( !$htaccess_written ) {
+                    // The relevant server-specific verification below will fail if this write was needed.
+                    $htaccess_write_failed = true;
+                }
+            }
+            $web_config = $dir . '/web.config';
+            $iis_rules = '<' . '?xml version="1.0" encoding="UTF-8"?' . ">\n";
+            $iis_rules .= "<configuration>\n";
+            $iis_rules .= "    <system.webServer>\n";
+            $iis_rules .= "        <security>\n";
+            $iis_rules .= "            <authorization>\n";
+            $iis_rules .= "                <add accessType=\"Deny\" users=\"*\" />\n";
+            $iis_rules .= "            </authorization>\n";
+            $iis_rules .= "        </security>\n";
+            $iis_rules .= "    </system.webServer>\n";
+            $iis_rules .= "</configuration>\n";
+            if ( !$wp_filesystem->exists( $web_config ) ) {
+                $web_config_written = $wp_filesystem->put_contents( $web_config, $iis_rules, FS_CHMOD_FILE );
+                if ( !$web_config_written ) {
+                    // The active server's protection is checked below; diagnostics will not claim IIS is protected.
+                    $web_config_write_failed = true;
+                }
+            } elseif ( !self::is_protection_file_valid( $dir, 'webconfig' ) ) {
+                // Migrate the previous plugin-generated IIS rule only when its exact legacy block is present.
+                $existing_web_config = $wp_filesystem->get_contents( $web_config );
+                $legacy_block = '/<system\\.webServer>\\s*<authorization>\\s*' . '<deny\\s+users=["\']\\*["\']\\s*\\/>\\s*' . '<\\/authorization>\\s*<\\/system\\.webServer>/i';
+                if ( is_string( $existing_web_config ) && preg_match( $legacy_block, $existing_web_config ) ) {
+                    $replacement = '<system.webServer><security><authorization>' . '<add accessType="Deny" users="*" />' . '</authorization></security></system.webServer>';
+                    $migrated_web_config = preg_replace(
+                        $legacy_block,
+                        $replacement,
+                        $existing_web_config,
+                        1
+                    );
+                    $web_config_written = is_string( $migrated_web_config ) && $wp_filesystem->put_contents( $web_config, $migrated_web_config, FS_CHMOD_FILE );
+                    if ( !$web_config_written ) {
+                        $web_config_write_failed = true;
                     }
                 }
-                // 1. Apache 2.2 & 2.4+ / LiteSpeed .htaccess
-                $htaccess_file = $dir . '/.htaccess';
-                if ( !$wp_filesystem->exists( $htaccess_file ) ) {
-                    $rules = "# Apache 2.4+ & LiteSpeed\n";
-                    $rules .= "<IfModule mod_authz_core.c>\n";
-                    $rules .= "    Require all denied\n";
-                    $rules .= "</IfModule>\n";
-                    $rules .= "# Apache 2.2\n";
-                    $rules .= "<IfModule !mod_authz_core.c>\n";
-                    $rules .= "    Deny from all\n";
-                    $rules .= "</IfModule>\n";
-                    $wp_filesystem->put_contents( $htaccess_file, $rules );
-                }
-                // 2. Microsoft IIS web.config
-                $web_config = $dir . '/web.config';
-                if ( !$wp_filesystem->exists( $web_config ) ) {
-                    $iis_rules = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-                    $iis_rules .= "<configuration>\n";
-                    $iis_rules .= "    <system.webServer>\n";
-                    $iis_rules .= "        <authorization>\n";
-                    $iis_rules .= "            <deny users=\"*\" />\n";
-                    $iis_rules .= "        </authorization>\n";
-                    $iis_rules .= "    </system.webServer>\n";
-                    $iis_rules .= "</configuration>\n";
-                    $wp_filesystem->put_contents( $web_config, $iis_rules );
-                }
-                // 3. Nginx / Universal index.php
-                $index_file = $dir . '/index.php';
-                if ( !$wp_filesystem->exists( $index_file ) ) {
-                    $wp_filesystem->put_contents( $index_file, "<?php\n// Silence is golden.\n" );
-                }
-                return true;
             }
-            return false;
+            $index_file = $dir . '/index.php';
+            if ( !$wp_filesystem->exists( $index_file ) ) {
+                $index_written = $wp_filesystem->put_contents( $index_file, "<?php\n// Silence is golden.\n", FS_CHMOD_FILE );
+                if ( !$index_written ) {
+                    // index.php is defense-in-depth; do not treat it as a substitute for deny rules.
+                    if ( class_exists( 'OG_PSR_Logger' ) ) {
+                        OG_PSR_Logger::warning( 'Could not create the storage directory index fallback.' );
+                    }
+                }
+            }
+            $server_software = ( isset( $_SERVER['SERVER_SOFTWARE'] ) ? strtolower( sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) ) : '' );
+            $is_nginx = false !== strpos( $server_software, 'nginx' );
+            $is_iis = false !== strpos( $server_software, 'microsoft-iis' ) || false !== strpos( $server_software, 'iis' );
+            $is_apache = false !== strpos( $server_software, 'apache' ) || false !== strpos( $server_software, 'litespeed' );
+            if ( $is_nginx ) {
+                // Nginx ignores both .htaccess and web.config. Require explicit site-level
+                // confirmation after the documented server-level deny rule has been configured.
+                // Developers can confirm this with the ogpsr_storage_protection_confirmed filter.
+                return (bool) apply_filters( 'ogpsr_storage_protection_confirmed', false, self::resolve_upload_root() );
+            }
+            if ( $is_iis ) {
+                return !$web_config_write_failed && self::is_protection_file_valid( $dir, 'webconfig' );
+            }
+            if ( $is_apache ) {
+                return !$htaccess_write_failed && self::is_protection_file_valid( $dir, 'htaccess' );
+            }
+            // Unknown server: the plugin cannot establish which configuration file is enforced.
+            // Require explicit site-level confirmation instead of treating file presence as protection.
+            return (bool) apply_filters( 'ogpsr_storage_protection_confirmed', false, self::resolve_upload_root() );
         }
 
     }

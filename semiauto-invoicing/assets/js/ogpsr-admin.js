@@ -546,9 +546,13 @@
         // Live Preview Synchronization Engine (Free Core)
         // ============================================================
         var previewTimeout;
+        var previewRequestSequence = 0;
         function updateLivePreview() {
             if (!$('#ogpsr-live-preview').length) return;
 
+            // Invalidate in-flight requests immediately so an older tab/settings
+            // response cannot overwrite the preview requested most recently.
+            var requestId = ++previewRequestSequence;
             clearTimeout(previewTimeout);
             previewTimeout = setTimeout(function () {
                 var $loader = $('.ogpsr-preview-loader');
@@ -561,16 +565,26 @@
 
                 $loader.addClass('active');
 
-                var containerWidth = $('#ogpsr-preview-wrapper').width();
+                // Measure the stable canvas width (not the wrapper, which may be mid-transition).
+                var containerWidth = $('#ogpsr-preview-wrapper').parent().width() || $('#ogpsr-preview-wrapper').width() || 380;
                 var format = activeDevice.data('format');
                 var widthAttr = activeDevice.data('width');
+                var requestedFormat = format;
+                var requestedWidth = String(widthAttr || '');
                 var docWidthPx = 794; // Default A4 (210mm)
+                var scale = 1;
 
                 if (format === 'thermal') {
-                    docWidthPx = parseInt(widthAttr) * 3.78;
+                    var rollWidthMm = parseInt(widthAttr, 10) || 80;
+                    docWidthPx = rollWidthMm * 3.78;
+                    // The wrapper width is proportional to the roll (80mm = 100% of the canvas, see
+                    // ogpsr-admin.css), so scale against the final target width for a stable fit.
+                    var targetWrapperWidth = containerWidth * (rollWidthMm / 80);
+                    var thermalFitScale = (targetWrapperWidth - 24) / docWidthPx;
+                    scale = Math.max(0.95, Math.min(thermalFitScale, 1.45));
+                } else {
+                    scale = Math.min(containerWidth / docWidthPx, 1);
                 }
-
-                var scale = Math.min(containerWidth / docWidthPx, 1);
 
                 $iframe[0].dataset.ogpsrScale = scale;
                 $iframe[0].dataset.ogpsrDocWidth = docWidthPx + 'px';
@@ -616,11 +630,19 @@
 
                 $.post(getAjaxUrl(), {
                     action: 'ogpsr_get_live_preview',
-                    format: activeDevice.data('format'),
-                    width: activeDevice.data('width'),
+                    format: requestedFormat,
+                    width: requestedWidth,
                     settings: settings,
                     nonce: previewNonce
                 }, function (response) {
+                    // Ignore responses for older tabs or settings states.
+                    var $currentDevice = $('.ogpsr-device-btn.active');
+                    if (requestId !== previewRequestSequence || !$currentDevice.length ||
+                        $currentDevice.data('format') !== requestedFormat ||
+                        String($currentDevice.data('width') || '') !== requestedWidth) {
+                        return;
+                    }
+
                     var $iframe = $('#ogpsr-preview-iframe');
                     var $wrapper = $('#ogpsr-preview-wrapper');
                     var $errorNotice = $('#ogpsr-preview-error-notice');
@@ -634,56 +656,217 @@
                             $wrapper.removeClass('ogpsr-hide');
                         }
                         $iframe.removeClass('ogpsr-hide');
+
+                        // Keep the reserved iframe height while the next document loads, hiding the
+                        // unfinished paint to prevent logo and layout flicker between paper sizes.
+                        if ($wrapper.length) {
+                            $wrapper.addClass('ogpsr-preview-swapping');
+                        }
+
+                        // All post-load work runs from the parent window. Event listeners, animation
+                        // frames and observers inside the script-disabled sandboxed iframe are not
+                        // dispatched by every browser (e.g. Safari/WebKit), so none are relied upon.
                         $iframe.off('load.ogpsr').on('load.ogpsr', function () {
-                            var doc = this.contentWindow.document;
-                            var storedScale = parseFloat(this.dataset.ogpsrScale || 1);
+                            var iframeEl = this;
+                            var doc = iframeEl.contentDocument || (iframeEl.contentWindow ? iframeEl.contentWindow.document : null);
+                            if (!doc) return;
+
+                            var storedScale = parseFloat(iframeEl.dataset.ogpsrScale || 1);
                             var activeWidth = activeDevice.data('width') || '80mm';
+                            var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
-                            doc.documentElement.setAttribute('data-ogpsr-width', activeWidth);
-
-                            // Apply live merchant custom properties via in-memory CSSOM (Zero inline style="" attributes)
-                            var fontColor   = $('#ogpsr_font_color').val() || '#0f172a';
-                            var accentColor = $('#ogpsr_accent_color, #ogpsr_thermal_accent_color').filter(':visible').val() || $('#ogpsr_accent_color').val() || '#1e293b';
-                            var fontFamily  = $('#ogpsr_font_family, #ogpsr_thermal_font_family').filter(':visible').val() || $('#ogpsr_font_family').val() || 'DejaVu Sans';
-                            var fontSize    = $('#ogpsr_font_size').val();
-                            var lineHeight  = $('#ogpsr_line_height').val();
-
-                            var previewSheet = doc.getElementById('ogpsr-preview-css') ? doc.getElementById('ogpsr-preview-css').sheet : (doc.styleSheets ? doc.styleSheets[0] : null);
-                            if (previewSheet && typeof previewSheet.insertRule === 'function') {
-                                var dynamicCss = ':root { ' +
-                                    '--ogpsr-scale: ' + storedScale + '; ' +
-                                    '--ogpsr-font-family: "' + fontFamily + '", sans-serif; ' +
-                                    '--ogpsr-font-color: ' + fontColor + '; ' +
-                                    '--ogpsr-accent-color: ' + accentColor + '; ' +
-                                    (fontSize ? ('--ogpsr-font-size: ' + fontSize + 'pt; ') : '') +
-                                    (lineHeight ? ('--ogpsr-line-height: ' + lineHeight + '; ') : '') +
-                                '}';
-                                try {
-                                    previewSheet.insertRule(dynamicCss, previewSheet.cssRules.length);
-                                } catch (err) {}
+                            // Preview scoping attributes are printed server-side for documents; this keeps
+                            // other preview types (rendered without them) consistent.
+                            if (doc.documentElement) {
+                                if (!doc.documentElement.getAttribute('data-ogpsr-width')) {
+                                    doc.documentElement.setAttribute('data-ogpsr-width', activeWidth);
+                                }
+                                doc.documentElement.classList.add('ogpsr-preview-html');
+                            }
+                            if (doc.body) {
+                                doc.body.classList.add('ogpsr-preview-body');
                             }
 
-                            try {
-                                var scrollH = doc.documentElement.scrollHeight || doc.body.scrollHeight;
-                                if (scrollH && scrollH > 50) {
-                                    var fittedH = Math.ceil(scrollH * storedScale) + 20;
-                                    this.height = Math.max(fittedH, 480);
+                            var revealed = false;
+                            var revealPreview = function () {
+                                if (revealed) return;
+                                revealed = true;
+                                window.requestAnimationFrame(function () {
+                                    $('#ogpsr-preview-wrapper').removeClass('ogpsr-preview-swapping').addClass('ogpsr-preview-animated');
+                                });
+                            };
+
+                            // Fit the iframe height to the scaled document using the parent window's
+                            // animation frames. A new target always restarts the animation, so the
+                            // height can never stay stuck on a previously recorded target.
+                            var fitPreviewHeight = function (safeScale) {
+                                var bodyHeight = doc.body ? Math.max(doc.body.scrollHeight, doc.body.offsetHeight) : 0;
+                                var documentHeight = doc.documentElement ? Math.max(doc.documentElement.scrollHeight, doc.documentElement.offsetHeight) : 0;
+                                var scrollH = Math.max(bodyHeight, documentHeight);
+                                if (scrollH <= 50) return;
+
+                                var targetHeight = Math.max(Math.ceil(scrollH * safeScale) + 35, 480);
+                                var currentHeight = parseInt(iframeEl.height, 10) || Math.ceil(iframeEl.getBoundingClientRect().height) || 480;
+
+                                if (iframeEl._ogpsrHeightAnimation) {
+                                    if (iframeEl._ogpsrTargetHeight === targetHeight) return;
+                                    window.cancelAnimationFrame(iframeEl._ogpsrHeightAnimation);
+                                    iframeEl._ogpsrHeightAnimation = 0;
                                 }
-                            } catch (e) { }
+                                iframeEl._ogpsrTargetHeight = targetHeight;
+
+                                if (reduceMotion || Math.abs(currentHeight - targetHeight) < 2) {
+                                    iframeEl.height = targetHeight;
+                                    return;
+                                }
+
+                                var startHeight = currentHeight;
+                                var startTime = null;
+                                var animateHeight = function (timestamp) {
+                                    if (startTime === null) startTime = timestamp;
+                                    var progress = Math.min((timestamp - startTime) / 180, 1);
+                                    var easedProgress = 1 - Math.pow(1 - progress, 3);
+                                    iframeEl.height = Math.round(startHeight + ((targetHeight - startHeight) * easedProgress));
+
+                                    if (progress < 1) {
+                                        iframeEl._ogpsrHeightAnimation = window.requestAnimationFrame(animateHeight);
+                                    } else {
+                                        iframeEl.height = targetHeight;
+                                        iframeEl._ogpsrHeightAnimation = 0;
+                                    }
+                                };
+
+                                iframeEl._ogpsrHeightAnimation = window.requestAnimationFrame(animateHeight);
+                            };
+
+                            // Apply live merchant custom properties through CSSOM on the loaded preview stylesheet.
+                            var applyDynamicCSSOM = function () {
+                                // Sanitize and validate inputs before interpolating them into CSS.
+                                var rawFontColor   = $('#ogpsr_font_color').val() || '#0f172a';
+                                var rawAccentColor = $('#ogpsr_accent_color, #ogpsr_thermal_accent_color').filter(':visible').val() || $('#ogpsr_accent_color').val() || '#1e293b';
+                                var rawFontFamily  = $('#ogpsr_font_family, #ogpsr_thermal_font_family').filter(':visible').val() || $('#ogpsr_font_family').val() || 'DejaVu Sans';
+                                var rawFontSize    = $('#ogpsr_font_size').val();
+                                var rawLineHeight  = $('#ogpsr_line_height').val();
+
+                                // Strict font-family allowlist.
+                                var allowedFonts = ['DejaVu Sans', 'Courier', 'Helvetica', 'Times', 'Verdana', 'Arial'];
+                                var safeFontFamily = (typeof rawFontFamily === 'string' && allowedFonts.indexOf(rawFontFamily) !== -1)
+                                    ? rawFontFamily
+                                    : 'DejaVu Sans';
+
+                                // Strict hexadecimal color validation.
+                                var hexColorRegex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+                                var safeFontColor = (typeof rawFontColor === 'string' && hexColorRegex.test(rawFontColor.trim()))
+                                    ? rawFontColor.trim()
+                                    : '#0f172a';
+                                var safeAccentColor = (typeof rawAccentColor === 'string' && hexColorRegex.test(rawAccentColor.trim()))
+                                    ? rawAccentColor.trim()
+                                    : '#1e293b';
+
+                                // Strict numerical bounds: font size 6–24pt, line height 1–3, scale 0.1–5.
+                                var parsedFontSize = parseFloat(rawFontSize);
+                                var safeFontSize = (!isNaN(parsedFontSize) && parsedFontSize >= 6 && parsedFontSize <= 24)
+                                    ? parsedFontSize
+                                    : null;
+
+                                var parsedLineHeight = parseFloat(rawLineHeight);
+                                var safeLineHeight = (!isNaN(parsedLineHeight) && parsedLineHeight >= 1 && parsedLineHeight <= 3)
+                                    ? parsedLineHeight
+                                    : null;
+
+                                var safeScale = (!isNaN(storedScale) && isFinite(storedScale) && storedScale >= 0.1 && storedScale <= 5)
+                                    ? storedScale
+                                    : 1;
+
+                                var previewLink = doc.getElementById('ogpsr-preview-css');
+                                var previewSheet = (previewLink && previewLink.sheet)
+                                    ? previewLink.sheet
+                                    : (doc.styleSheets && doc.styleSheets.length ? doc.styleSheets[0] : null);
+
+                                if (previewSheet && typeof previewSheet.insertRule === 'function') {
+                                    var dynamicCss = ':root { ' +
+                                        '--ogpsr-scale: ' + safeScale + '; ' +
+                                        '--ogpsr-font-family: "' + safeFontFamily + '", sans-serif; ' +
+                                        '--ogpsr-font-color: ' + safeFontColor + '; ' +
+                                        '--ogpsr-accent-color: ' + safeAccentColor + '; ' +
+                                        (safeFontSize !== null ? ('--ogpsr-font-size: ' + safeFontSize + 'pt; ') : '') +
+                                        (safeLineHeight !== null ? ('--ogpsr-line-height: ' + safeLineHeight + '; ') : '') +
+                                    '}';
+
+                                    try {
+                                        previewSheet.insertRule(dynamicCss, previewSheet.cssRules.length);
+                                    } catch (err) {
+                                        // Keep the preview usable if the browser rejects a CSS rule.
+                                    }
+                                }
+
+                                // Height fitting is best-effort and must never block the preview reveal.
+                                try {
+                                    fitPreviewHeight(safeScale);
+                                    window.requestAnimationFrame(function () {
+                                        fitPreviewHeight(safeScale);
+                                    });
+                                } catch (e) {
+                                    // Keep the preview visible even if measurement fails.
+                                }
+                                revealPreview();
+                            };
+
+                            // Stylesheets are printed into the document head server-side, so they are already
+                            // loaded when this load event fires. Adopt the enqueued stylesheets only for preview
+                            // documents rendered without them, then wait for them from the parent window.
+                            var stylesheetIds = ['ogpsr-document-template-css', 'ogpsr-preview-css'];
+                            var adoptedLinks = [];
+
+                            stylesheetIds.forEach(function (id) {
+                                var parentLink = document.getElementById(id);
+
+                                if (!parentLink || doc.getElementById(id) || !doc.head) {
+                                    return;
+                                }
+
+                                var link = doc.createElement('link');
+                                link.id = id;
+                                link.rel = 'stylesheet';
+                                link.href = parentLink.href;
+                                doc.head.appendChild(link);
+                                adoptedLinks.push(link);
+                            });
+
+                            if (!adoptedLinks.length) {
+                                applyDynamicCSSOM();
+                                return;
+                            }
+
+                            var sheetChecks = 0;
+                            var waitForAdoptedSheets = function () {
+                                sheetChecks++;
+                                var sheetsReady = adoptedLinks.every(function (link) {
+                                    return !!link.sheet;
+                                });
+                                if (sheetsReady || sheetChecks >= 40) {
+                                    applyDynamicCSSOM();
+                                    return;
+                                }
+                                window.setTimeout(waitForAdoptedSheets, 25);
+                            };
+                            waitForAdoptedSheets();
                         });
 
                         $iframe[0].srcdoc = response.data.html;
                     } else {
-                        var errorMsg = response.data && response.data.message ? String(response.data.message) : 'Unknown Preview Error';
+                        var errorMsg = response.data && response.data.message ? String(response.data.message) : (ogpsr_admin_data.strings.preview_unknown_error || 'Unknown Preview Error');
                         var safeError = $('<div>').text(errorMsg).html();
+                        var safeTitle = $('<div>').text(ogpsr_admin_data.strings.preview_failed || 'Preview Failed').html();
                         if ($wrapper.length) {
                             $wrapper.addClass('ogpsr-hide');
                         }
                         if ($errorNotice.length) {
-                            $errorNotice.html('<strong>Preview Failed</strong>' + safeError).removeClass('ogpsr-hide');
+                            $errorNotice.html('<strong>' + safeTitle + '</strong>' + safeError).removeClass('ogpsr-hide');
                         }
                     }
                 }).fail(function (xhr, status, error) {
+                    if (requestId !== previewRequestSequence) return;
                     console.error('OGPSR Live Preview AJAX Failed:', status, error);
                     var $wrapper = $('#ogpsr-preview-wrapper');
                     var $errorNotice = $('#ogpsr-preview-error-notice');
@@ -692,10 +875,14 @@
                         $wrapper.addClass('ogpsr-hide');
                     }
                     if ($errorNotice.length) {
-                        $errorNotice.html('<strong>Preview Failed</strong>Server or Network Error (Code: ' + safeCode + ')').removeClass('ogpsr-hide');
+                        var safeTitle = $('<div>').text(ogpsr_admin_data.strings.preview_failed || 'Preview Failed').html();
+                        var networkMsg = (ogpsr_admin_data.strings.preview_network_error || 'Server or Network Error (Code: %s)').replace('%s', String(safeCode));
+                        $errorNotice.html('<strong>' + safeTitle + '</strong>' + $('<div>').text(networkMsg).html()).removeClass('ogpsr-hide');
                     }
                 }).always(function () {
-                    $loader.removeClass('active');
+                    if (requestId === previewRequestSequence) {
+                        $loader.removeClass('active');
+                    }
                 });
             }, 250);
         }

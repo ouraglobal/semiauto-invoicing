@@ -1,0 +1,14 @@
+/**
+ * SemiAuto Invoicing - Customer Document Email Styles
+ *
+ * Appended to the WooCommerce email stylesheet through the woocommerce_email_styles
+ * filter (WooCommerce inlines email CSS for mail client compatibility).
+ */
+
+.ogpsr-email-message {
+	margin: 0 0 16px;
+}
+
+.ogpsr-email-additional-content {
+	margin: 0 0 16px;
+}

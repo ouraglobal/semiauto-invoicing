@@ -16,14 +16,14 @@ if ( !class_exists( 'OG_PSR_Account_Hub' ) ) {
          * Initialize hooks.
          */
         public static function init() {
-            add_action( 'init', [__CLASS__, 'register_endpoint'] );
-            add_filter( 'query_vars', [__CLASS__, 'add_query_vars'], 0 );
-            add_filter( 'woocommerce_get_query_vars', [__CLASS__, 'add_woocommerce_query_vars'] );
-            add_filter( 'woocommerce_account_menu_items', [__CLASS__, 'add_menu_item'] );
-            add_filter( 'woocommerce_endpoint_' . self::$endpoint . '_title', [__CLASS__, 'endpoint_title'] );
-            add_action( 'woocommerce_account_' . self::$endpoint . '_endpoint', [__CLASS__, 'render_endpoint_content'] );
+            add_action( 'init', array(__CLASS__, 'register_endpoint') );
+            add_filter( 'query_vars', array(__CLASS__, 'add_query_vars'), 0 );
+            add_filter( 'woocommerce_get_query_vars', array(__CLASS__, 'add_woocommerce_query_vars') );
+            add_filter( 'woocommerce_account_menu_items', array(__CLASS__, 'add_menu_item') );
+            add_filter( 'woocommerce_endpoint_' . self::$endpoint . '_title', array(__CLASS__, 'endpoint_title') );
+            add_action( 'woocommerce_account_' . self::$endpoint . '_endpoint', array(__CLASS__, 'render_endpoint_content') );
             // Enqueue frontend styles
-            add_action( 'wp_enqueue_scripts', [__CLASS__, 'enqueue_frontend_assets'] );
+            add_action( 'wp_enqueue_scripts', array(__CLASS__, 'enqueue_frontend_assets') );
         }
 
         /**
@@ -37,7 +37,7 @@ if ( !class_exists( 'OG_PSR_Account_Hub' ) ) {
             add_rewrite_endpoint( self::$endpoint, EP_ROOT | EP_PAGES );
             // 1. Upgrade detection: Check if rewrite version matches current plugin version
             $stored_version = get_option( 'ogpsr_rewrite_version', '' );
-            $needs_flush = $stored_version !== OG_PSR_VERSION;
+            $needs_flush = OG_PSR_VERSION !== $stored_version;
             // 2. Rule presence check: Verify whether the endpoint actually exists in cached rewrite_rules
             if ( !$needs_flush ) {
                 $rules = get_option( 'rewrite_rules' );
@@ -56,6 +56,7 @@ if ( !class_exists( 'OG_PSR_Account_Hub' ) ) {
             }
             // 3. One-time soft flush (false = do NOT rewrite .htaccess, only refresh DB rewrite_rules cache)
             if ( $needs_flush ) {
+                // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.flush_rewrite_rules_flush_rewrite_rules -- One-time version-gated soft flush for endpoint registration.
                 flush_rewrite_rules( false );
                 update_option( 'ogpsr_rewrite_version', OG_PSR_VERSION );
             }
@@ -97,11 +98,11 @@ if ( !class_exists( 'OG_PSR_Account_Hub' ) ) {
          * Add the menu item to frontend My Account page.
          */
         public static function add_menu_item( $items ) {
-            $new_items = [];
+            $new_items = array();
             $inserted = false;
             foreach ( $items as $key => $value ) {
                 $new_items[$key] = $value;
-                if ( $key === 'orders' ) {
+                if ( 'orders' === $key ) {
                     $new_items[self::$endpoint] = __( 'My Documents', 'semiauto-invoicing' );
                     $inserted = true;
                 }
@@ -121,7 +122,7 @@ if ( !class_exists( 'OG_PSR_Account_Hub' ) ) {
                 wp_enqueue_style(
                     'ogpsr-frontend',
                     OG_PSR_URL . 'assets/css/ogpsr-frontend.css',
-                    ['dashicons'],
+                    array('dashicons'),
                     OG_PSR_VERSION
                 );
             }
@@ -136,7 +137,7 @@ if ( !class_exists( 'OG_PSR_Account_Hub' ) ) {
                 return;
             }
             // Get customer orders across all registered statuses (paginated to avoid loading unbounded orders)
-            $order_statuses = ( function_exists( 'wc_get_order_statuses' ) ? array_keys( wc_get_order_statuses() ) : [
+            $order_statuses = ( function_exists( 'wc_get_order_statuses' ) ? array_keys( wc_get_order_statuses() ) : array(
                 'completed',
                 'processing',
                 'on-hold',
@@ -144,15 +145,15 @@ if ( !class_exists( 'OG_PSR_Account_Hub' ) ) {
                 'cancelled',
                 'refunded',
                 'failed'
-            ] );
-            $orders = wc_get_orders( [
+            ) );
+            $orders = wc_get_orders( array(
                 'customer' => $current_user,
                 'limit'    => apply_filters( 'ogpsr_my_documents_orders_limit', 25 ),
                 'status'   => $order_statuses,
-            ] );
-            $enabled_formats = get_option( 'ogpsr_receipt_formats', ['thermal', 'a4'] );
+            ) );
+            $enabled_formats = get_option( 'ogpsr_receipt_formats', array('thermal', 'a4') );
             if ( !is_array( $enabled_formats ) ) {
-                $enabled_formats = [];
+                $enabled_formats = array();
             }
             echo '<div class="ogpsr-hub-container">';
             echo '<header class="ogpsr-hub-header">';

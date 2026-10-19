@@ -12,7 +12,7 @@ if ( !defined( 'ABSPATH' ) ) {
 }
 class OG_PSR_Admin_Notices {
     public function __construct() {
-        add_action( 'admin_notices', [$this, 'render_notices'] );
+        add_action( 'admin_notices', array($this, 'render_notices') );
     }
 
     /**

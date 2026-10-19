@@ -15,13 +15,13 @@ class OG_PSR_Mock_Order {
     private $data;
 
     public function __construct() {
-        $this->data = [
+        $this->data = array(
             'id'                   => 12345,
             'number'               => '12345',
             'status'               => 'completed',
             'currency'             => ( function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'USD' ),
             'date_created'         => ( class_exists( 'WC_DateTime' ) ? new WC_DateTime(gmdate( 'Y-m-d H:i:s' )) : gmdate( 'Y-m-d H:i:s' ) ),
-            'billing'              => [
+            'billing'              => array(
                 'first_name' => 'John',
                 'last_name'  => 'Doe',
                 'company'    => 'Sample Store Co.',
@@ -33,8 +33,8 @@ class OG_PSR_Mock_Order {
                 'country'    => 'US',
                 'email'      => 'john.doe@example.com',
                 'phone'      => '+1 (555) 123-4567',
-            ],
-            'shipping'             => [
+            ),
+            'shipping'             => array(
                 'first_name' => 'John',
                 'last_name'  => 'Doe',
                 'company'    => 'Sample Store Co.',
@@ -44,41 +44,41 @@ class OG_PSR_Mock_Order {
                 'state'      => 'NY',
                 'postcode'   => '10001',
                 'country'    => 'US',
-            ],
+            ),
             'payment_method'       => 'bacs',
             'payment_method_title' => 'Direct Bank Transfer',
-            'items'                => [[
+            'items'                => array(array(
                 'name'     => 'Premium Silk Scarf',
                 'qty'      => 1,
                 'subtotal' => 120.0,
                 'total'    => 120.0,
                 'sku'      => 'SILK-001',
                 'ean'      => '9780201379624',
-                'taxes'    => [
-                    'total' => [
+                'taxes'    => array(
+                    'total' => array(
                         1 => 6.0,
-                    ],
-                ],
-            ], [
+                    ),
+                ),
+            ), array(
                 'name'     => 'Luxury Leather Wallet',
                 'qty'      => 2,
                 'subtotal' => 300.0,
                 'total'    => 300.0,
                 'sku'      => 'LTHR-W-02',
                 'ean'      => '8435123456789',
-                'taxes'    => [
-                    'total' => [
+                'taxes'    => array(
+                    'total' => array(
                         1 => 15.0,
-                    ],
-                ],
-            ]],
+                    ),
+                ),
+            )),
             'shipping_total'       => 20.0,
             'shipping_tax'         => 1.0,
             'discount_total'       => 10.0,
             'total_tax'            => 22.0,
             'total'                => 452.0,
-            'meta'                 => [],
-        ];
+            'meta'                 => array(),
+        );
     }
 
     public function get_id() {
@@ -110,7 +110,7 @@ class OG_PSR_Mock_Order {
     }
 
     public function get_fees() {
-        $fees = [];
+        $fees = array();
         return $fees;
     }
 
@@ -239,18 +239,18 @@ class OG_PSR_Mock_Order {
     }
 
     public function get_tax_totals() {
-        return [
-            1 => (object) [
+        return array(
+            1 => (object) array(
                 'label'       => 'VAT (5%)',
                 'amount'      => $this->data['total_tax'],
                 'is_compound' => false,
                 'tax_rate_id' => 1,
-            ],
-        ];
+            ),
+        );
     }
 
     public function get_items( $types = 'line_item' ) {
-        $items = [];
+        $items = array();
         foreach ( $this->data['items'] as $index => $item_data ) {
             $items[$index] = new class($item_data) {
                 private $item;
@@ -312,7 +312,7 @@ class OG_PSR_Mock_Order {
                         }
 
                         public function is_type( $type ) {
-                            return $type === 'simple';
+                            return 'simple' === $type;
                         }
 
                         public function get_name() {
@@ -340,12 +340,12 @@ class OG_PSR_Mock_Order {
                         }
 
                         public function get_meta( $key ) {
-                            if ( in_array( $key, [
+                            if ( in_array( $key, array(
                                 '_ean',
                                 '_gtin',
                                 '_barcode',
                                 '_wpm_gtin'
-                            ], true ) ) {
+                            ), true ) ) {
                                 return $this->item['ean'] ?? '';
                             }
                             return '';
@@ -356,7 +356,7 @@ class OG_PSR_Mock_Order {
                 }
 
                 public function get_meta_data() {
-                    return [];
+                    return array();
                 }
 
                 public function get_meta( $key ) {
@@ -364,11 +364,11 @@ class OG_PSR_Mock_Order {
                 }
 
                 public function get_formatted_meta_data( $hide_prefix = '_' ) {
-                    return [];
+                    return array();
                 }
 
                 public function get_all_formatted_meta_data() {
-                    return [];
+                    return array();
                 }
 
             }
@@ -382,36 +382,36 @@ class OG_PSR_Mock_Order {
     }
 
     public function get_meta_data() {
-        $meta_objects = [];
+        $meta_objects = array();
         foreach ( $this->data['meta'] as $k => $v ) {
-            $meta_objects[] = (object) [
+            $meta_objects[] = (object) array(
                 'key'   => $k,
                 'value' => $v,
-            ];
+            );
         }
         return $meta_objects;
     }
 
     public function get_formatted_billing_address() {
-        return implode( "\n", array_filter( [
+        return implode( "\n", array_filter( array(
             $this->data['billing']['first_name'] . ' ' . $this->data['billing']['last_name'],
             $this->data['billing']['company'],
             $this->data['billing']['address_1'],
             $this->data['billing']['address_2'],
             $this->data['billing']['city'] . ', ' . $this->data['billing']['state'] . ' ' . $this->data['billing']['postcode'],
             $this->data['billing']['country']
-        ] ) );
+        ) ) );
     }
 
     public function get_formatted_shipping_address() {
-        return implode( "\n", array_filter( [
+        return implode( "\n", array_filter( array(
             $this->data['shipping']['first_name'] . ' ' . $this->data['shipping']['last_name'],
             $this->data['shipping']['company'],
             $this->data['shipping']['address_1'],
             $this->data['shipping']['address_2'],
             $this->data['shipping']['city'] . ', ' . $this->data['shipping']['state'] . ' ' . $this->data['shipping']['postcode'],
             $this->data['shipping']['country']
-        ] ) );
+        ) ) );
     }
 
     public function get_item_count() {
@@ -423,61 +423,60 @@ class OG_PSR_Mock_Order {
     }
 
     public function get_coupon_codes() {
-        return ['SAVE10'];
+        return array('SAVE10');
     }
 
     public function get_order_item_totals() {
         $currency = $this->get_currency();
-        $totals = [
-            'cart_subtotal' => [
+        $totals = array(
+            'cart_subtotal' => array(
                 'label' => __( 'Subtotal:', 'semiauto-invoicing' ),
-                'value' => wc_price( 420.0, [
+                'value' => wc_price( 420.0, array(
                     'currency' => $currency,
-                ] ),
-            ],
-            'discount'      => [
+                ) ),
+            ),
+            'discount'      => array(
                 'label' => __( 'Discount:', 'semiauto-invoicing' ),
-                'value' => '-' . wc_price( 10.0, [
+                'value' => '-' . wc_price( 10.0, array(
                     'currency' => $currency,
-                ] ),
-            ],
-            'shipping'      => [
+                ) ),
+            ),
+            'shipping'      => array(
                 'label' => __( 'Shipping:', 'semiauto-invoicing' ),
-                'value' => wc_price( 20.0, [
+                'value' => wc_price( 20.0, array(
                     'currency' => $currency,
-                ] ) . ' <small>' . __( 'via Standard Shipping', 'semiauto-invoicing' ) . '</small>',
-            ],
-        ];
-        $totals['tax'] = [
+                ) ) . ' <small>' . __( 'via Standard Shipping', 'semiauto-invoicing' ) . '</small>',
+            ),
+        );
+        $totals['tax'] = array(
             'label' => __( 'VAT (5%):', 'semiauto-invoicing' ),
-            'value' => wc_price( 22.0, [
+            'value' => wc_price( 22.0, array(
                 'currency' => $currency,
-            ] ),
-        ];
-        $totals['order_total'] = [
+            ) ),
+        );
+        $totals['order_total'] = array(
             'label' => __( 'Total:', 'semiauto-invoicing' ),
-            'value' => wc_price( 452.0, [
+            'value' => wc_price( 452.0, array(
                 'currency' => $currency,
-            ] ),
-        ];
-        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
-        return apply_filters( 'woocommerce_get_order_item_totals', $totals, $this );
+            ) ),
+        );
+        return $totals;
     }
 
     public function get_coupons() {
-        return [];
+        return array();
     }
 
     public function get_taxes() {
-        return [];
+        return array();
     }
 
     public function get_shipping_lines() {
-        return [];
+        return array();
     }
 
     public function get_fee_lines() {
-        return [];
+        return array();
     }
 
     public function get_checkout_payment_url() {
@@ -506,14 +505,14 @@ class OG_PSR_Mock_Order {
      * @return array
      */
     public function get_bacs_accounts() {
-        return [[
+        return array(array(
             'bank_name'      => 'Apex Global Commercial Bank',
             'account_name'   => 'Sample Store Co.',
             'account_number' => '9876543210',
             'sort_code'      => '12-34-56',
             'iban'           => 'AE290331234567890123456',
             'bic'            => 'APEXAEAD',
-        ]];
+        ));
     }
 
 }

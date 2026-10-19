@@ -3,14 +3,14 @@ Contributors: salmansh169
 Tags: woocommerce, thermal receipt, packaging, pdf invoice, e-invoicing
 Requires at least: 6.0
 Tested up to: 7.1
-Stable tag: 8.4.2
+Stable tag: 8.4.7
 Requires PHP: 8.0
 WC requires at least: 10.0.0
-WC tested up to: 11.2.0
+WC tested up to: 11.2.1
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0-standalone.html
 
-Local PDFs & Global E-Invoicing compliance assistant with thermal receipts (44mm to 80mm), PDF invoices, and packaging slips for WooCommerce.
+Local PDFs & Global E-Invoicing compliance assistant. Thermal receipts (44–80mm), PDF invoices, and packaging slips for WooCommerce.
 
 == Description ==
 
@@ -19,11 +19,9 @@ Local PDFs & Global E-Invoicing compliance assistant with thermal receipts (44mm
 
 ### Compliance Disclaimer
 
-No plugin can provide complete legal, tax, or regulatory compliance. SemiAuto Invoicing operates as a software compliance assistant designed to help merchants format and generate, and automate documents aligned with officially published technical e-invoicing specifications.
+No plugin can provide complete legal, tax, or regulatory compliance. SemiAuto Invoicing operates as a software compliance assistant to help merchants format and generate store documents aligned with technical specifications. Store owners remain responsible for ensuring their accounting records satisfy applicable local, national, and international laws. This software does not provide legal or tax advice.
 
-Use of this plugin does not guarantee legal, regulatory, tax, or accounting compliance. Tax and document regulations vary by jurisdiction, business structure, and individual transaction requirements. Store owners remain solely responsible for ensuring their accounting records and invoicing workflows satisfy applicable local, national, and international laws. This software does not provide legal, tax, or accounting advice.
-
-This plugin uses the [Freemius SDK](https://freemius.com) as a third-party service provider for license management and optional account/usage services. Use of Freemius is subject to the [Freemius Terms of Service](https://freemius.com/terms/) and [Freemius Privacy Policy](https://freemius.com/privacy/). Data sharing with Freemius occurs strictly upon administrative consent via the initial opt-in screen or account configuration within the plugin.
+This plugin uses the [Freemius SDK](https://freemius.com) for license management and optional account services subject to the [Freemius Terms](https://freemius.com/terms/) and [Privacy Policy](https://freemius.com/privacy/). Data sharing occurs strictly upon administrative opt-in.
 
 **Key Features (Free Core):**
 
@@ -35,6 +33,15 @@ This plugin uses the [Freemius SDK](https://freemius.com) as a third-party servi
 *   **Live Preview Studio**: Real-time canvas rendering with responsive device viewport switcher.
 *   **Seamless Email Delivery**: Attach PDF invoices, packaging slips, or receipts directly to WooCommerce transactional customer emails.
 
+== Source Code & Build Process ==
+
+* Public Source Repository: https://github.com/ouraglobal/semiauto-invoicing/
+* Build Process: All JavaScript and CSS source files in the `assets/` directory are unminified, human-readable Vanilla JavaScript and CSS written directly for native browser execution. No compilation or transpilation build step is required.
+
+
+== External services ==
+
+This plugin connects to the Freemius API (https://api.freemius.com), provided by Freemius, Inc., for license management and optional account services. Data is only sent after an administrator opts in on the Freemius opt-in screen or account page; skipping the opt-in sends no data. When opted in, the administrator's name and email, site URL and language, WordPress and PHP versions, and plugin version are shared (plus the list of active plugins and themes only if separately permitted). Customer and order data is never sent. Terms: https://freemius.com/terms/ - Privacy Policy: https://freemius.com/privacy/
 
 == Installation ==
 
@@ -45,7 +52,7 @@ This plugin uses the [Freemius SDK](https://freemius.com) as a third-party servi
 == Frequently Asked Questions ==
 
 = How do I customize my store logo on invoices and receipts? =
-Navigate to **WooCommerce -> Settings -> SemiAuto Invoicing -> Design Studio**, click **Upload Logo**, and select your store logo from the WordPress Media Library. The logo is resolved locally and embedded securely.
+Navigate to **WooCommerce -> Settings -> SemiAuto Invoicing -> General** (Business Identity section), click **Select / Upload Image**, and select your store logo from the WordPress Media Library. The logo is resolved locally and embedded securely.
 
 = Where are generated PDF documents stored? =
 Documents are generated locally and stored inside your WordPress uploads directory (`wp-content/uploads/semiauto-invoicing/`). The plugin automatically generates defensive `.htaccess` (for Apache / LiteSpeed), `web.config` (for Microsoft IIS), and `index.php` silence files to block direct HTTP directory browsing and serves downloads through authenticated endpoints.
@@ -67,41 +74,24 @@ Yes, authenticated customers can download their PDF invoices directly from the W
 = Is this plugin compatible with High-Performance Order Storage (HPOS)? =
 Yes, SemiAuto Invoicing is declared and tested for WooCommerce High-Performance Order Storage (HPOS / Custom Order Tables).
 
-= How does the plugin handle GDPR / Erasure and Document Retention? =
-SemiAuto integrates natively with the WordPress Personal Data Exporter and Eraser.
-
-Document Retention: SemiAuto may retain generated invoices, receipts, and other financial records for statutory tax, accounting, or record-keeping requirements. Where retention applies, personal data deletion requests do not cause immediate physical deletion of retained financial documents.
-
-During erasure, non-statutory caches and session tokens are wiped immediately. Commercial records are retained by default to ensure tax compliance; customize via the `ogpsr_privacy_retain_financial_records` filter.
-
-= What data does SemiAuto store and what is the data lifecycle? =
-SemiAuto processes order data locally from WooCommerce:
-1. Generation: PDF documents are generated locally and stored in `wp-content/uploads/semiauto-invoicing/`.
-2. Delivery: Served through authenticated endpoints or standard WooCommerce customer emails.
-3. Retention: Non-statutory caches purge automatically; statutory invoices are retained until audit windows expire.
+= How does the plugin handle GDPR, Erasure, and Document Retention? =
+SemiAuto integrates natively with the WordPress Personal Data Exporter and Eraser. Non-statutory caches and tokens are purged upon request. Invoices and receipts may be retained locally for statutory accounting requirements (customizable via the `ogpsr_privacy_retain_financial_records` filter).
 
 Data Inventory:
-* Customer name & address: From WooCommerce; formatted inside generated PDF documents.
-* Order ID & invoice number: From WooCommerce; stored in order meta.
-* Generated documents: Stored locally in protected server directories.
-* Diagnostic logs: Stored locally; strictly excludes sensitive passwords or full document dumps.
-* Freemius Telemetry (Opt-in only): Admin contact info & technical metadata for licensing/updates; never collects customer transactional data.
+* Customer details: Formatted inside generated documents from order data.
+* Order identifiers: Stored in standard order metadata.
+* Generated documents: Saved locally in protected upload directories.
+* Diagnostic logs: Stored locally; sensitive credentials are never logged.
+* Licensing metadata (Opt-in only): Handled by Freemius; never tracks customer transactional data.
 
 = Which image formats are supported for store logos? =
-SemiAuto Invoicing supports PNG, WebP, and JPEG images. For optimal print clarity on continuous thermal rolls and high-resolution A4 prints, we recommend a PNG with a transparent background (at least 600px wide). Vector SVGs are excluded by design to prevent document rendering distortion and guarantee strict PDF/A-3 standard compliance and server security.
-
-== Source Code & Build Process ==
-
-* Public Source Repository: https://github.com/ouraglobal/semiauto-invoicing/
-* Build Process: All JavaScript and CSS source files in the `assets/` directory are unminified, human-readable Vanilla JavaScript and CSS written directly for native browser execution. No compilation or transpilation build step is required.
+SemiAuto Invoicing supports PNG, WebP, and JPEG images. For optimal print clarity on continuous thermal rolls and high-resolution A4 prints, we recommend a PNG with a transparent background (at least 600px wide). Vector SVGs are excluded by design to prevent document rendering distortion and safeguard server security against XML and SSRF vulnerabilities.
 
 == Upgrade Notice ==
 
-= 8.4.2 =
-Hardens document stylesheet loading via WP_Filesystem, removes client-side inline .style DOM mutations, and documents preview iframe architecture.
+= 8.4.7 =
+Maintenance release.
 
-= 8.4.1 =
-Refactors PDF document styling to use programmatic Dompdf stylesheet injection, completely eliminates manual <style> and inline style tags across PHP and JavaScript, and implements native WordPress DOM error handling.
 
 == Screenshots ==
 
@@ -111,37 +101,11 @@ Refactors PDF document styling to use programmatic Dompdf stylesheet injection, 
 
 == Changelog ==
 
-= 8.4.2 =
-* Core: Refactored document stylesheet loading in compile_document_rules() to read exclusively from local plugin assets via WP_Filesystem, preventing external CSS injection.
-* Admin: Added architectural documentation docblocks to preview renderer explaining isolated iframe (srcdoc) stylesheet serialization via wp_print_styles().
-* JavaScript: Eliminated client-side .style and .style.setProperty() inline DOM mutations in admin scripts, migrating preview scaling to browser CSSOM rules and container data attributes.
-* Architecture: Strengthened rules file architectural boundaries, ensuring all rule specifications remain strictly bounded and modular.
+= 8.4.7 =
+* Maintenance release with no changes to free features.
 
-= 8.4.1 =
-* Core: Programmatically inject dynamic PDF CSS declarations directly into the Dompdf stylesheet tree via `$dompdf->getCss()->load_css()`, completely removing all `<style>` tags from offline document templates.
-* Admin: Converted XML data stream preview containers to pure semantic CSS classes powered by enqueued stylesheets (`wp_enqueue_style()`), eliminating all inline `style="..."` attributes.
-* JavaScript: Replaced raw HTML string concatenation in live preview error states with native DOM container toggling (`#ogpsr-preview-error-notice`), eliminating all literal `<style>` tags from client-side scripts.
-* Compliance: Documented public source repository link and unminified Vanilla JS/CSS architecture under `== Source Code & Build Process ==` per WordPress.org Guideline #4.
 
-= 8.4.0 =
-* Security: Strictly enqueued all admin settings, preview canvas, and diagnostic styles and scripts via standard WordPress APIs, completely eliminating inline <style> and <script> blocks.
-* Core: Fortified WP_Filesystem API operations and atomic artifact publishing across all document rendering pipelines.
-* Standards: Upgraded PHP and WooCommerce compatibility declarations for streamlined store deployments.
-* Architecture: Preserved strict Free vs. Premium pure delegation boundaries with zero trialware residue in Free distribution builds.
-
-= 8.3.0 =
-* Compatibility: Declared full compatibility with WooCommerce 11.2.0.
-* WordPress: Added the 'Requires Plugins: woocommerce' header in compliance with modern WordPress core plugin dependency standards.
-* I18n: Hardened Personal Data Erasure gettext translation strings with explicit format assignments, ensuring complete comment-string pairing integrity across deployment packagers.
-* Architecture: Preserved strict Free vs. Premium pure delegation boundaries with zero trialware residue in Free distribution builds.
-
-= 8.2.9 =
-* Core: Hardened logo selection in admin settings with native WordPress Media Library modal filtering restricted strictly to supported raster formats (PNG, WebP, JPEG, GIF).
-* Documentation: Updated logo setting description and FAQ with explicit raster format guidance and technical rationale for vector SVG exclusion to ensure PDF/A print fidelity and server security.
-* Standards: Unified PHPDoc @package docblock declarations across all directory index silence files and handlers to SemiAutoInvoicing in full alignment with WordPress Coding Standards (WPCS).
-* Architecture: Preserved Free vs. Premium pure delegation boundaries and clean zero-trialware settings schema across all document generation pipelines.
-
-[See changelog.txt for release history prior to v8.2.9]
+[See changelog.txt for full release history prior to v8.4.7]
 
 == Third-Party Libraries & Copyright ==
 

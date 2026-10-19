@@ -1,0 +1,110 @@
+/**
+ * Live Preview Synchronization Styles
+ * Externalized for WordPress Marketplace compliance (Zero Inline Styles Rule).
+ */
+
+:root {
+    --ogpsr-scale: 0.45; /* Dynamic scale factor computed by JS */
+}
+
+/* ============================================================
+   Base iframe body reset & canvas container
+   ============================================================ */
+html.ogpsr-preview-html {
+    background: #f0f2f5 !important;
+    width: 100% !important;
+    min-height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+    -webkit-font-smoothing: antialiased;
+    box-sizing: border-box !important;
+}
+
+body.ogpsr-preview-body {
+    background: #ffffff !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    backface-visibility: hidden;
+    will-change: transform;
+    text-align: left !important;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit !important;
+}
+
+/* ============================================================
+   A4 / Packaging: 210mm Sheet Dimensions
+   ============================================================ */
+body.ogpsr-format-a4,
+body.ogpsr-format-packaging {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    padding: 12mm 15mm !important;
+    transform-origin: top left !important;
+    transform: scale(var(--ogpsr-scale, 1)) !important;
+    margin-bottom: calc((var(--ogpsr-scale, 1) - 1) * 297mm + 35px) !important;
+    text-align: left !important;
+}
+
+/* ============================================================
+   Thermal POS Roll Dimensions (44mm, 57mm, 58mm, 76mm, 80mm)
+   ============================================================ */
+body.ogpsr-format-thermal {
+    padding: 5mm !important;
+    text-align: left !important;
+    transform-origin: top center !important;
+    transform: scale(var(--ogpsr-scale, 1)) !important;
+    margin: 10px auto !important;
+}
+
+html[data-ogpsr-width="80mm"] body.ogpsr-format-thermal { width: 80mm !important; min-width: 80mm !important; }
+html[data-ogpsr-width="76mm"] body.ogpsr-format-thermal { width: 76mm !important; min-width: 76mm !important; }
+html[data-ogpsr-width="58mm"] body.ogpsr-format-thermal { width: 58mm !important; min-width: 58mm !important; }
+html[data-ogpsr-width="57mm"] body.ogpsr-format-thermal { width: 57mm !important; min-width: 57mm !important; }
+html[data-ogpsr-width="44mm"] body.ogpsr-format-thermal { width: 44mm !important; min-width: 44mm !important; }
+
+/* Thermal Header & Footer Centering */
+.ogpsr-format-thermal .ogpsr-thermal-header {
+    text-align: center !important;
+}
+.ogpsr-format-thermal .ogpsr-thermal-customer-box {
+    text-align: left !important;
+}
+.ogpsr-format-thermal .ogpsr-thermal-items-table {
+    text-align: left !important;
+}
+.ogpsr-format-thermal .ogpsr-thermal-footer {
+    text-align: center !important;
+}
+
+/* Force high-res images */
+img {
+    max-width: 100%;
+    height: auto;
+    image-rendering: -webkit-optimize-contrast;
+}
+
+/* Hide print-only elements in preview */
+.no-print {
+    display: none !important;
+}
+
+
+
+/* Demo Data Notice */
+.ogpsr-demo-notice {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    border-top: 1px solid #e2e8f0 !important;
+    padding: 4px 8px !important;
+    text-align: center !important;
+    font-size: 10px !important;
+    color: #64748b !important;
+    z-index: 9999 !important;
+}

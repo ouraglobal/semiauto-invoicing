@@ -1,0 +1,265 @@
+== Changelog ==
+
+= 8.4.2 =
+* Core: Refactored document stylesheet loading in compile_document_rules() to read exclusively from local plugin assets via WP_Filesystem, preventing external CSS injection.
+* Admin: Added architectural documentation docblocks to preview renderer explaining isolated iframe (srcdoc) stylesheet serialization via wp_print_styles().
+* JavaScript: Eliminated client-side .style and .style.setProperty() inline DOM mutations in admin scripts, migrating preview scaling to browser CSSOM rules and container data attributes.
+* Architecture: Strengthened rules file architectural boundaries, ensuring all rule specifications remain strictly bounded and modular.
+
+= 8.4.1 =
+* Core: Programmatically inject dynamic PDF CSS declarations directly into the Dompdf stylesheet tree via `$dompdf->getCss()->load_css()`, completely removing all `<style>` tags from offline document templates.
+* Admin: Converted XML data stream preview containers to pure semantic CSS classes powered by enqueued stylesheets (`wp_enqueue_style()`), eliminating all inline `style="..."` attributes.
+* JavaScript: Replaced raw HTML string concatenation in live preview error states with native DOM container toggling (`#ogpsr-preview-error-notice`), eliminating all literal `<style>` tags from client-side scripts.
+* Compliance: Documented public source repository link and unminified Vanilla JS/CSS architecture under `== Source Code & Build Process ==` per WordPress.org Guideline #4.
+
+= 8.4.0 =
+* Security: Strictly enqueued all admin settings, preview canvas, and diagnostic styles and scripts via standard WordPress APIs, completely eliminating inline <style> and <script> blocks.
+* Core: Fortified WP_Filesystem API operations and atomic artifact publishing across all document rendering pipelines.
+* Standards: Upgraded PHP and WooCommerce compatibility declarations for streamlined store deployments.
+* Architecture: Preserved strict Free vs. Premium pure delegation boundaries with zero trialware residue in Free distribution builds.
+[//]: # fs_premium_only_begin
+* Premium: Introduced full multi-gateway integration for the A-Cube Peppol API alongside StoreCove, supporting worldwide e-invoicing across international jurisdictions.
+* Premium: Added dedicated A-Cube UBL-to-JSON transposition converter engine with automated serialization and format negotiation (UBL 2.1 XML and JSON modes).
+* Premium: Added interactive Legal Entity Selection & Hydra API discovery in A-Cube settings, enabling merchants to select and manage multiple registered business entities.
+* Premium: Built JWT Bearer Token lifecycle management with one-click token generation/refresh and real-time connection diagnostics.
+* Premium: Added replay-proof A-Cube webhook routing with constant-time HMAC-SHA256 signature verification and 5-minute replay window protection.
+* Premium: Implemented fully scoped metadata isolation (_ogpsr_acube_* vs. _ogpsr_storecove_*) preventing cross-gateway state pollution.
+* Premium: Enhanced Order Details Metabox with Gateway Pulse tree visualization and multi-gateway transmission controls for invoices and credit notes.
+[//]: # fs_premium_only_end
+
+= 8.3.0 =
+* Compatibility: Declared full compatibility with WooCommerce 11.2.0.
+* WordPress: Added the 'Requires Plugins: woocommerce' header in compliance with modern WordPress core plugin dependency standards.
+* I18n: Hardened Personal Data Erasure gettext translation strings with explicit format assignments, ensuring complete comment-string pairing integrity across deployment packagers.
+* Architecture: Preserved strict Free vs. Premium pure delegation boundaries with zero trialware residue in Free distribution builds.
+
+= 8.2.9 =
+* Core: Hardened logo selection in admin settings with native WordPress Media Library modal filtering restricted strictly to supported raster formats (PNG, WebP, JPEG, GIF).
+* Documentation: Updated logo setting description and FAQ with explicit raster format guidance and technical rationale for vector SVG exclusion to ensure PDF/A print fidelity and server security.
+* Standards: Unified PHPDoc @package docblock declarations across all directory index silence files and handlers to SemiAutoInvoicing in full alignment with WordPress Coding Standards (WPCS).
+* Architecture: Preserved Free vs. Premium pure delegation boundaries and clean zero-trialware settings schema across all document generation pipelines.
+
+= 8.2.8 =
+* Security: Hardened atomic document publication with directory-first establishment and canonical boundary verification (OG_PSR_Security::establish_trusted_directory), eliminating potential TOCTOU race conditions and guaranteeing fail-closed protection against hostile symlink traversal.
+* Core: Fortified Customer My Account Hub rewrite endpoint registration with version-aware upgrade detection and cached rule-presence verification, eliminating 404 template_redirect recovery loops and unnecessary runtime flush operations.
+* Core: Converted Customer My Account Hub endpoint renderer to pure PHP string output, preventing empty template tag leakage upon Freemius stripping.
+* Architecture: Fortified Free vs. Premium structural boundaries with pure delegation across Mock Order fees, Live Preview Studio filters, PDF generation helpers, and Document Registry extension allowlists.
+* Core: Eliminated tier-presence variables ($is_pro_format) in shared security barrier, guaranteeing zero trialware residue in Free distribution builds.
+* Documentation: Added comprehensive Privacy, Data Lifecycle, and Data Inventory disclosures to readme FAQ and updated suggested privacy policy text (wp_add_privacy_policy_content) with statutory document retention guidance.
+* Documentation: Updated third-party library licenses in readme to accurately reflect php-svg-lib (LGPL-3.0-or-later) and Freemius SDK (GPL-3.0-or-later).
+* Documentation: Updated Pro FAQ in readme to document StoreCove API v2 transmission across 32+ supported countries with a Bring Your Own Key (BYOK) model.
+
+= 8.2.7 =
+* Security: Implemented bounded-memory log inspection in Logger (capped at a 128KB threshold with path containment checks), eliminating potential memory exhaustion on multi-megabyte log files by delegating oversized inspection to WooCommerce > Status > Logs.
+* Security: Hardened email subject construction with strict sanitize_text_field across customer and kitchen copy notification emails to eliminate potential CRLF email header injection vectors.
+* Security: Introduced Web Server Storage Defense diagnostics check to actively report directory protection status across Apache, LiteSpeed, Microsoft IIS, and Nginx.
+* Documentation: Explicitly documented Nginx server block location directive (location ^~ /wp-content/uploads/semiauto-invoicing/ { deny all; return 403; }) for web servers where .htaccess is ignored.
+* Developer: Added ogpsr_document_storage_root filter with fail-safe sanitization and stream wrapper defense, enabling customizable document paths for containerized environments without breaking shared hosting installs.
+* Logging: Integrated comprehensive security warning and activity audit logging across email attachment dispatch, order document downloads, and admin viewing workflows.
+* Security: Hardened customer document email handler with context-aware HTML escaping across all dynamic variables.
+* Security: Hardened logo attachment resolution with strict raster image MIME allowlist, extension allowlist, and 5MB size limit against SVG/XML vector injections.
+* Security: Fortified admin live preview error renderer with DOM-escaped failure messages and sanitized status codes.
+* Security: Documented and hardened preview iframe sandbox architecture for responsive parent-to-iframe CSS property scaling.
+
+= 8.2.6 =
+* Security: Fortified central path containment (OG_PSR_Security::is_path_within) to strictly require resolved existing ancestor containment and fail closed on unresolvable filesystem candidates.
+* Core: Strengthened Document Registry and storage validation across all document consumption entry points.
+[//]: # fs_premium_only_begin
+* Premium: Fortified payload file editor with explicit target order ID filename matching, preventing arbitrary file write attempts.
+* Premium: Hardened StoreCove evidence downloader with strict base64 decoding mode, 10MB response size bounds, and credential sanitization.
+* Premium: Strengthened bulk document archive generator with strict document extension allowlisting (.pdf, .xml, .json), excluding configs and system files.
+[//]: # fs_premium_only_end
+
+= 8.2.5 =
+* Security: Fortified central path containment helper (OG_PSR_Security::is_path_within) with authoritative realpath resolution against symlink escape and traversal vectors.
+* Security: Hardened Document Registry file validation (OG_PSR_Document_Registry::validate_document_file) with fail-closed security boundary verification.
+* Security: Restricted plugin uninstall disk cleanup strictly to the dedicated namespace directory (wp-content/uploads/semiauto-invoicing/).
+* Security: Hardened Live Preview settings whitelist validation to fail closed against unrecognized or injected configuration keys.
+[//]: # fs_premium_only_begin
+* Premium: Hardened StoreCove webhook listener with conditional route registration (zero inactive routes), mandatory secret entropy verification, and immutable terminal states (delivered, cleared).
+* Premium: Enhanced Peppol Gateway XML payload editor with strict parent-order and refund object integrity verification.
+* Premium: Enforced universal XXE defense (LIBXML_NONET) across all DOMDocument and SimpleXML parsers in gateway and metabox pipelines.
+* Premium: Fortified bulk document exporter with fail-closed path containment, symlink exclusion, and cryptographic temporary file cleanup.
+* Premium: Restricted external transmission evidence download redirects strictly to HTTPS and allowlisted gateway provider hosts.
+* Premium: Deepened StoreCove API v2 gateway integration across 32 jurisdictions, DBNAlliance, OpenPeppol, Italy SDI dual routing, Spain FACe / DIR3 metadata preservation, Germany Leitweg-ID, and French Chorus Pro B2G workflows with verified test coverage across 92 live assertions.
+[//]: # fs_premium_only_end
+
+= 8.2.4 =
+* Core: Harmonized Universal Document Engine (UDE) view-model data engine with zero tier-presence variables in Free execution scope.
+* Core: Added shipping global location number (GLN) resolution and display support under delivery addresses across A4 invoice layouts.
+* Template: Optimized address card line-height and layout rhythm for multi-line statutory tax registrations and legal entities.
+[//]: # fs_premium_only_begin
+* Premium: Integrated full sovereign country-specific B2B/B2G metadata into the Universal Document Engine across A4 invoices, credit notes, and continuous thermal POS receipts (44mm–80mm).
+* Premium: Added visual rendering for Italian Codice Fiscale and Codice Destinatario SDI across A4 and Thermal customer details blocks.
+* Premium: Added visual rendering for Spanish DIR3 administrative unit triplets (Oficina Contable, Órgano Gestor, Unidad Tramitadora) on A4 and Thermal templates.
+* Premium: Added visual rendering for Malaysian Business Registration Numbers (BRN / SSM) and Sales & Service Tax (SST) registrations on A4 and Thermal layouts.
+* Premium: Added visual rendering for Japanese corporate buyer 13-digit Corporate Numbers across A4 and Thermal receipts.
+* Premium: Added visual rendering for French B2G Chorus Pro identifiers (SIRET, Service Code, and Commitment #) across Continuous Thermal POS receipts.
+* Premium: Expanded buyer Tax ID / VAT fallback lookup chain to include India GSTIN and TIN identifiers.
+* Premium: Updated Live Preview Mock Order engine with dynamic sovereign mock data presets for Italy, Spain, Japan, France, Germany, Malaysia, and UAE.
+* Testing: Added automated regression test suite verifying test coverage for all country-specific fields on A4 and Thermal formats.
+[//]: # fs_premium_only_end
+
+= 8.2.3 =
+* Playground: Added multi-region onboarding wizard and 1-click merchant store switching across 10 global regions in sandbox demo.
+* Playground: Streamlined WebAssembly demo data provisioning via background Blueprint PHP execution with 14 international country demo orders and statutory test identifiers.
+* Core: Enhanced demo preset routing and initial store environment configuration.
+* UI: Hardened settings repeater tables (Custom Checkout Fees and Cashier Staff Roster) with instant empty-state banner suppression on row creation, editing, and typing.
+* UI: Enhanced core admin stylesheets with explicit empty-state notice display and specificity rules.
+[//]: # fs_premium_only_begin
+* Premium: Enhanced Adaptive Checkout dynamic country router with universal fallback standard (Peppol BIS 3.0) for cross-border and non-sovereign regions.
+* Premium: Hardened India GSTIN 15-character statutory schema preservation and EAS identifier normalization across all international business registries.
+* Premium: Isolated German Leitweg-ID (Buyer Reference / Routing ID) and USt-IdNr. morphing strictly to German buyer billing contexts.
+* Premium: Added localized checkout tax identifier labels and placeholders for India (GSTIN), Saudi Arabia (VAT), Brazil (CNPJ), and clean universal Tax ID for Rest of the World.
+* Premium: Updated WooCommerce Block Checkout and Classic checkout dynamic field synchronizers to prevent sovereign label leakage on country changes.
+* Premium: Synchronized server-side initial buyer reference rendering with client-side dynamic country resolution.
+* Premium: Dynamically linked e-invoicing Pre-Flight Compliance modal descriptions, placeholders, and validation rules to the active profile standard being generated (PINT AE, PINT SG, PINT MY, PINT A-NZ, PINT JP, Factur-X, XRechnung, and BIS 3.0).
+* Gateways: Enhanced StoreCove Gateway routing across 32 jurisdictions with dynamic network selection between OpenPeppol (Europe, APAC) and DBNAlliance (North America).
+* Gateways: Harmonized Spanish FACe UBL metadata injection, CIF checkdigit verification, and Italy SDI domestic/cross-border routing.
+[//]: # fs_premium_only_end
+
+= 8.2.2 =
+* Core: Enhanced EAS scheme normalization and routing scheme resolution across international business identifier standards.
+* Core: Enhanced document type format mapping in Document Data Engine across A4, thermal, and packaging slip layouts.
+* Core: Added order number and customer URL fallback resolution for parent refunds and preview mock orders.
+* UI: Added centered thermal receipt layout styling and responsive scaling for thermal roll formats (44mm-80mm).
+[//]: # fs_premium_only_begin
+* Gateways: Added automated cross-border third-country tax acknowledgement (acknowledgeThirdCountryTax) to StoreCove API v2 payloads per Peppol Section 5.2.103.
+* Gateways: Normalized ISO 6523 Electronic Address Schemes (EAS) for Belgium CBE (0208), France SIRET (0009), and France SIRENE (0002) during participant discovery and document transmission.
+* Gateways: Hardened active gateway provider session gating, ensuring gateway metaboxes, action buttons, and Gateway Pulse widgets isolate strictly to active gateway configurations.
+* E-Invoicing: Enhanced French Factur-X profile with dynamic 14-digit SIRET (0009) and 9-digit SIRENE (0002) schemeID attributes.
+* E-Invoicing: Aligned Chorus Pro French B2G document requirements with Buyer Code Service (SFACETAT), Engagement Juridique (EJ), and statutory SIRET metadata.
+* Premium: Built pure PHP ISO/IEC 18004 offline QR Code generator engine with Reed-Solomon GF(256) error correction, standard Byte Mode encoding, automatic versioning (V1-V10), and optimal mask penalty selection for high-contrast scanner & camera readability.
+* Premium: Upgraded Code 128 and GS1 EAN-13 vector barcode generators with calibrated module width scaling, quiet zones, white background containers, and human-readable text labels.
+* Premium: Streamlined document format matching in PRO document enrichment engine across invoices, credit notes, thermal receipts, and packaging slips.
+[//]: # fs_premium_only_end
+
+= 8.2.1 =
+* Compliance: Validated with official WordPress.org Plugin Check (PCP) suite and resolved all PHPCS notices.
+* Security: Fortified admin JavaScript dynamic DOM updates with native text node construction, eliminating string HTML injections.
+* Security: Enforced strict sandbox policy (allow-same-origin allow-scripts) on Live Preview studio iframes.
+* Security: Hardened order metabox and preview renderer input processing with strict parameter unslashing and item-by-item whitelisting.
+* Privacy: Updated Personal Data Eraser disclosures and documentation for statutory commercial record retention filter (ogpsr_privacy_retain_financial_records).
+* UI: Harmonized Statutory Data card UI layout inside the Peppol metabox with structured data rows and dedicated action footer.
+* Core: Standardized stored-document path validation universally on OG_PSR_Document_Registry::validate_document_file.
+
+= 8.2.0 =
+* Security: Implemented universal multi-server directory security barrier (OG_PSR_Security::ensure_directory_security) generating dual Apache 2.2 / 2.4+ / LiteSpeed .htaccess directives, Microsoft IIS web.config authorization rules, and index.php silence guards.
+* Security: Centralized font semantic validation (OG_PSR_Document_Registry::sanitize_font_family) with strict font family allowlists across Dompdf runtime options, dynamic CSS compilation, live preview validation, and document view-model assembly.
+* Security: Fortified PDF generator settings signatures and document caching keys against CSS injection and font delimiter escape vectors.
+* Core: Deduplicated local server configuration file creation across PDF Generator and Premium XML Generator into a unified, WP_Filesystem-driven security pipeline.
+* Testing: Added automated end-to-end regression assertions for font sanitization security, CSS injection defense, and multi-server security file verification.
+
+= 8.1.9 =
+* Core: Standardized all filesystem operations across Free Core and Premium strictly on WP_Filesystem API, eliminating direct native fallbacks.
+* Core: Hardened Document Registry with centralized policy verification methods (validate_document_file, is_email_attachable).
+* Core: Enhanced Account Hub endpoint registration with validated rewrite self-healing flag on plugin activation.
+* Core: Gated sovereign regional fields (Leitweg-ID, UAE Trade License, Codice SDI, SIRET, BRN) and deduplicated reference labels in thermal and A4 document templates.
+* Core: Implemented self-healing document view & download dispatcher with dynamic DOM table row synchronization upon regeneration.
+* Security: Hardened order metabox and email attachment validation pipelines with authoritative Document Registry file validation.
+* Security: Refactored admin settings modal UI in JS to programmatic DOM element construction with text nodes for enhanced DOM-XSS resilience.
+* Privacy: Added configurable filter (ogpsr_privacy_retain_financial_records) to personal data eraser for merchant-controlled financial metadata retention.
+[//]: # fs_premium_only_begin
+* Premium: Standardized bulk downloader, XML generator, and StoreCove gateway file operations on WP_Filesystem API.
+[//]: # fs_premium_only_end
+
+= 8.1.8 =
+* Security: Hardened input type assertions, numeric bounds, ISO-4217 validation, and safe DOM insertions across Pro admin & customer portals.
+* Security: Added directory boundary containment validation for resolved theme templates and attachment pipelines.
+* Compliance: Standardized filesystem operations strictly on WP_Filesystem API and enhanced Plugin Check compliance.
+* Compliance: Standardized all internationalization string placeholders with explicit translator context comments.
+* Core: Standardized atomic PDF file replacement operations with WP_Filesystem API move methods.
+* Core: Hardened Live Preview settings validation with strict domain allowlists for customer detail fields and document format selectors.
+* Core: Isolated premium XML preview rendering into dedicated helper architecture to ensure pristine Free core compliance.
+* Privacy: Updated Personal Data Eraser and privacy disclosures with clear, merchant-responsibility phrasing.
+[//]: # fs_premium_only_begin
+* Gateways: Enhanced StoreCove Peppol access point adapter with multi-country identifier resolution for Malaysia (0230 BRN) and future-ready profile registry for Oman (0248 VATIN).
+* E-Invoicing: Normalized state subentity mapping for Malaysia (ISO 3166-2:MY) and streamlined positive credit note payable amount assertions.
+[//]: # fs_premium_only_end
+
+= 8.1.7 =
+* Security: Universalized filesystem containment checks across document generation, email attachments, and AJAX regeneration handlers.
+* Security: Enforced document format domain validation inside the central access authorization barrier.
+* Compliance: Verified clean audit across all 34 official WordPress.org Plugin Check (PCP) rules.
+* Compliance: Standardized all internationalization string placeholders with explicit translator context comments.
+* Core: Standardized atomic PDF file replacement operations with WP_Filesystem API move methods.
+* Core: Hardened Live Preview settings validation with strict domain allowlists for customer detail fields and document format selectors.
+* Core: Isolated premium XML preview rendering into dedicated helper architecture to ensure pristine Free core compliance.
+* Privacy: Updated Personal Data Eraser and privacy disclosures with clear, merchant-responsibility phrasing.
+[//]: # fs_premium_only_begin
+* Gateways: Enhanced StoreCove Peppol access point adapter with multi-country identifier resolution for Malaysia (0230 BRN) and future-ready profile registry for Oman (0248 VATIN).
+* E-Invoicing: Normalized state subentity mapping for Malaysia (ISO 3166-2:MY) and streamlined positive credit note payable amount assertions.
+[//]: # fs_premium_only_end
+
+= 8.1.6 =
+* Security: Centralized barrier (OG_PSR_Security) with strict authorization checks for order document downloads and unauthenticated guest 403 denial.
+* Security: Configured Dompdf network isolation (isRemoteEnabled = false) and local Media Library logo resolution via attachment IDs.
+* Core: Canonical Free document registry (OG_PSR_Document_Registry) defining supported document types, format aliases, and storage paths.
+* Core: Hardened live preview settings schema against arbitrary nested array injections.
+* Core: Enhanced Universal Document Engine (UDE) view-model pipeline and pre-compiled CSS presentation.
+* Privacy: Updated suggested privacy policy disclosures for local PDF generation and local disk storage.
+[//]: # fs_premium_only_begin
+* E-Invoicing: Certified 81-transition dynamic routing cross-border tax rate matrix across 9 sovereign profile standards with Saxon-C Schematron validation.
+* E-Invoicing: Aligned UAE statutory 5% rate reconciliation for Standard Rated Category (S) in XML Math Engine and PINT AE profile to guarantee Saxon-C Schematron compliance (aligned-ibrp-s-09 and ibr-190-ae).
+* E-Invoicing: High-precision 6-decimal math engine reconciliation with backward-compatible calculate() API method and dual-currency helper integration.
+* E-Invoicing: Multi-Profile Companion PDF Engine for on-demand PINT AE (with statutory GUID header line) and Factur-X PDF/A-3b embedding with sRGB2014 ICC profile passing veraPDF Rule 6.2.3.
+* UI: Refined 3-tier action button workflow in order edit metabox and accordion payload editor pre-save syntax validation.
+[//]: # fs_premium_only_end
+
+= 8.1.5 =
+* Security: Implemented centralized security barrier (OG_PSR_Security) with strict authorization checks for order document downloads.
+* Security: Hardened guest download handling with strict 403 denial for unauthenticated requests, ensuring documents remain confidential.
+* Security: Configured Dompdf with isRemoteEnabled set to false unconditionally and switched logo resolution to local Media Library attachment IDs.
+* Core: Canonical Free document registry (OG_PSR_Document_Registry) defining supported document types, format aliases, and storage paths.
+* Core: Hardened atomic PDF publication with strict uploads directory containment checks.
+* Core: Hardened live preview settings sanitization with explicit array schemas and nested array rejection.
+* Privacy: Updated suggested privacy policy text to accurately describe local PDF generation and local storage.
+[//]: # fs_premium_only_begin
+* E-Invoicing: Verified statutory French B2G acceptance on the Chorus Pro portal across Invoices and Credit Notes.
+* E-Invoicing: Dynamic legal stamp rendering across hybrid PDF/A-3 Factur-X and ZUGFeRD XRechnung documents.
+* Checkout: Zero-runtime CSS state-attribute gating for WooCommerce Block Checkout (Twenty Twenty-Five / FSE).
+* Fix: Resolved fatal error in XML math engine get_reconciled_tax_subtotals() and unassigned variable in checkout rendering.
+[//]: # fs_premium_only_end
+
+= 8.1.4 =
+* Core: Engineered universal dual-engine dynamic field rendering supporting FSE block themes and Classic shortcode checkouts.
+* UI: Defensive input placeholder transparency in WooCommerce Block checkout when unfocused.
+[//]: # fs_premium_only_begin
+* Compliance: French B2G Chorus Pro block fields (Customer SIRET Number, Code Service, Engagement Number).
+* Compliance: German KoSIT dynamic field morphing (Leitweg-ID / Buyer Reference and USt-IdNr.).
+[//]: # fs_premium_only_end
+
+= 8.1.3 =
+* Core: Standardized core Helvetica font metrics on canvas page numbering (e.g., 1 / 1).
+* UI: Updated "Update Document Details" button with resilient error handling and automatic page reload.
+[//]: # fs_premium_only_begin
+* E-Invoicing: Embedded dynamic legal stamp at the bottom of hybrid Factur-X / ZUGFeRD PDF/A-3 documents.
+* UI: Prevented text clipping on companion profile PDF download buttons with ellipsis truncation.
+[//]: # fs_premium_only_end
+
+= 8.1.2 =
+* Fix: Streamlined path verification in secure download handler with traversal, null-byte, and uploads containment verification.
+* GDPR: Integrated WordPress Privacy Policy Guide disclosures for local PDF storage and statutory retention periods.
+[//]: # fs_premium_only_begin
+* E-Invoicing: Automatic on-the-fly profile regeneration in secure XML download handler.
+* Compliance: Pre-flight validation for German public sector and French Chorus Pro.
+[//]: # fs_premium_only_end
+
+= 8.1.1 =
+* Rebrand: Comprehensive public rebrand to SemiAuto Invoicing – Local PDFs & Receipts.
+* Core: Optimized Dompdf options instantiation and font cache directory security.
+* Infrastructure: Reorganized repository directory structure with dedicated bin/tools/ colocation.
+
+= 8.1.0 =
+* Security: Hardened Live Preview Canvas against arbitrary script and CSS injection.
+* Core: Activated native typography and color palette customization within Free Core Design settings.
+* Core: Introduced store identity signature hashing with atomic order metadata stamping.
+[//]: # fs_premium_only_begin
+* Feature: Multi-Profile Companion PDF Engine for Factur-X hybrid PDF/A-3, XRechnung, and PINT AE.
+* Feature: Storage & Receipt Manager hierarchical branching for companion and alternate profiles.
+[//]: # fs_premium_only_end
+
+= 8.0.0 =
+* Core: Support for WooCommerce High-Performance Order Storage (HPOS / Custom Order Tables).
+* Security: Strict output escaping, capability checks, and nonce verification across all endpoints.
+* Core: Atomic file publication with temporary file staging to eliminate race conditions.

@@ -1,0 +1,32 @@
+{
+  "name": "ouraglobal/semiauto-invoicing",
+  "description": "Standards-aligned PDF invoices, thermal receipts (44mm-80mm), packing slips, and document workflows for WooCommerce stores.",
+  "type": "wordpress-plugin",
+  "license": "GPL-3.0-or-later",
+  "require-dev": {
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+    "wp-coding-standards/wpcs": "^3.1",
+    "phpcompatibility/phpcompatibility-wp": "^2.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Dompdf\\": "vendor/dompdf/vendor/dompdf/dompdf/src/",
+      "FontLib\\": "vendor/dompdf/vendor/dompdf/php-font-lib/src/FontLib/",
+      "Svg\\": "vendor/dompdf/vendor/dompdf/php-svg-lib/src/Svg/",
+      "Masterminds\\": "vendor/dompdf/vendor/masterminds/html5/src/",
+      "Sabberworm\\CSS\\": "vendor/dompdf/vendor/sabberworm/php-css-parser/src/"
+    },
+    "classmap": [
+      "vendor/dompdf/vendor/dompdf/dompdf/lib/Cpdf.php"
+    ]
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  },
+  "scripts": {
+    "lint": "vendor/bin/phpcs",
+    "lint-fix": "vendor/bin/phpcbf"
+  }
+}

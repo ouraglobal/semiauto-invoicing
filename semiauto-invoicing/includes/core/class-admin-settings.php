@@ -142,6 +142,11 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
                 echo '<a href="' . esc_url( $url ) . '" class="' . esc_attr( $css_class ) . '"' . (( $is_active ? ' aria-current="page"' : '' )) . '>';
                 echo '  <span class="dashicons ' . esc_attr( $tab['icon'] ) . '"></span>';
                 echo '  ' . esc_html( $tab['label'] );
+                // Optional count badge of a sub-tab (e.g. open e-invoicing issues on Status & Diagnostics).
+                $badge = (string) apply_filters( 'ogpsr_section_tab_badge', '', $slug );
+                if ( '' !== $badge ) {
+                    echo ' <span class="ogpsr-section-tab__badge">' . esc_html( $badge ) . '</span>';
+                }
                 echo '</a>';
             }
             echo '</div>';

@@ -1,5 +1,25 @@
 == Changelog ==
 
+= 8.4.7 =
+[//]: # fs_premium_only_begin
+* Premium: XRechnung 3.0.2 now applies the official KoSIT BR-DE rules, refusing invoices that would fail them, with the cause and where to fix it; adds the preceding invoice, contract and project references and the Skonto payment terms.
+* Premium: Factur-X 1.09 / ZUGFeRD 2.5 now build each conformance level (MINIMUM to EXTENDED and XRECHNUNG) with only the data that level allows.
+* Premium: Hybrid PDF/A-3 invoices now embed factur-x.xml or xrechnung.xml with the Factur-X XMP metadata and file relationship of their level.
+* Premium: Chorus Pro integration reviewed: SIRET, service code and engagement number validated at checkout, Chorus Pro framework and due date rules applied.
+* Premium: PINT AE now follows the official UAE rules: transaction type flags, emirates, predefined endpoints for deemed supplies, buyers not subject to VAT and exports, exemption and reverse charge codes, credit note reasons and AED amounts.
+* Premium: PINT A-NZ now follows the official Australia / New Zealand rules: GST categories, seller and buyer ABN / NZBN, GST numbers, BSB bank details and the GST total in the tax accounting currency.
+* Premium: Added the New Zealand buyer GST number to the adaptive checkout and the order metabox.
+* Premium: Orders without WooCommerce taxes: when prices include tax, the GST / VAT share is derived with WooCommerce's own tax calculation and the profile's country rate, and document totals stay equal to the WooCommerce order.
+* Premium: Added a country tax rates table to the e-invoicing settings, with a button that adds missing standard rates to WooCommerce.
+* Premium: Added invoice type code, preceding invoice, UAE transaction type, billing frequency and credit note reason fields to the order metabox, and a tax status note.
+* Premium: Seller registration (company ID and scheme) is now shared by all profiles that need it; the separate store SIRET setting is merged into it.
+* Premium: Exchange rates are only taken from the order, a multi-currency plugin or the exchange-rate automation; a missing rate is reported instead of assumed.
+* Premium: A-NZ retention now keeps documents 7 years, covering the New Zealand requirement.
+[//]: # fs_premium_only_end
+[//]: # fs_free_only_begin
+* Maintenance release with no changes to free features.
+[//]: # fs_free_only_end
+
 = 8.4.6 =
 * Premium: PINT EU now applies the official PINT EU EN16931-aligned and jurisdiction-aligned rules, refusing invoices that would fail them, with a clear cause and fix.
 * Premium: Added PINT EU national rules for Norway, Denmark, Italy, Sweden, Iceland, the Netherlands, Germany and Greece.

@@ -4,7 +4,7 @@
  * Plugin Name:       SemiAuto Invoicing
  * Plugin URI:        https://ouraglobal.ae/semiauto-invoicing/
  * Description:       Local PDFs & Global E-Invoicing compliance assistant. Thermal receipts (44–80mm), PDF invoices, and packaging slips for WooCommerce.
- * Version:           8.4.7
+ * Version:           8.4.8
  * Author:            ouraglobal
  * Contributors:      salmansh169
  * Author URI:        https://ouraglobal.ae/
@@ -92,7 +92,7 @@ if ( function_exists( 'ogpsr_fs' ) ) {
     } );
     // Define core constants
     if ( !defined( 'OG_PSR_VERSION' ) ) {
-        define( 'OG_PSR_VERSION', '8.4.7' );
+        define( 'OG_PSR_VERSION', '8.4.8' );
     }
     if ( !defined( 'OG_PSR_PATH' ) ) {
         define( 'OG_PSR_PATH', plugin_dir_path( __FILE__ ) );

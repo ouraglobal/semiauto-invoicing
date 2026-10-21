@@ -3,7 +3,7 @@ Contributors: salmansh169
 Tags: woocommerce, thermal receipt, packaging, pdf invoice, e-invoicing
 Requires at least: 6.0
 Tested up to: 7.1
-Stable tag: 8.4.7
+Stable tag: 8.4.8
 Requires PHP: 8.0
 WC requires at least: 10.0.0
 WC tested up to: 11.2.1
@@ -42,6 +42,7 @@ This plugin uses the [Freemius SDK](https://freemius.com) for license management
 == External services ==
 
 This plugin connects to the Freemius API (https://api.freemius.com), provided by Freemius, Inc., for license management and optional account services. Data is only sent after an administrator opts in on the Freemius opt-in screen or account page; skipping the opt-in sends no data. When opted in, the administrator's name and email, site URL and language, WordPress and PHP versions, and plugin version are shared (plus the list of active plugins and themes only if separately permitted). Customer and order data is never sent. Terms: https://freemius.com/terms/ - Privacy Policy: https://freemius.com/privacy/
+
 
 == Installation ==
 
@@ -89,7 +90,7 @@ SemiAuto Invoicing supports PNG, WebP, and JPEG images. For optimal print clarit
 
 == Upgrade Notice ==
 
-= 8.4.7 =
+= 8.4.8 =
 Maintenance release.
 
 
@@ -101,11 +102,10 @@ Maintenance release.
 
 == Changelog ==
 
-= 8.4.7 =
+= 8.4.8 =
 * Maintenance release with no changes to free features.
 
-
-[See changelog.txt for full release history prior to v8.4.7]
+[See changelog.txt for full release history prior to v8.4.8]
 
 == Third-Party Libraries & Copyright ==
 

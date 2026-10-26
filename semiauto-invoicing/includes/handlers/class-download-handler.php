@@ -101,6 +101,7 @@ if ( !class_exists( 'OG_PSR_Download_Handler' ) ) {
                 ob_end_clean();
             }
             header( 'Content-Type: ' . $mime_type );
+            header( 'X-Content-Type-Options: nosniff' );
             header( 'Content-Disposition: attachment; filename="' . basename( $file_path ) . '"' );
             $file_size = ( !empty( $wp_filesystem ) ? $wp_filesystem->size( $file_path ) : 0 );
             header( 'Content-Length: ' . $file_size );

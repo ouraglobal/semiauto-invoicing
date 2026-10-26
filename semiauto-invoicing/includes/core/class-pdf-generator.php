@@ -18,6 +18,13 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
         public static $is_preview = false;
 
         /**
+         * If true, the next generation on this instance ignores an existing cached file (force regeneration).
+         *
+         * @var bool
+         */
+        public $bypass_cache = false;
+
+        /**
          * Formats Country and State codes into human-readable "Country - State" string.
          *
          * @param string $country_code 2-letter country code
@@ -305,24 +312,28 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
          */
         public function force_regenerate_thermal( $order_id ) {
             $fs = $this->init_filesystem();
-            // Delete all existing thermal PDFs for this order
+            // Delete the thermal PDF recorded on the order (targeted: no directory listing)
             $dir = ( class_exists( 'OG_PSR_Security' ) ? OG_PSR_Security::resolve_document_root( 'thermal_receipt' ) : wp_normalize_path( wp_upload_dir()['basedir'] . '/semiauto-invoicing/thermal-receipts' ) );
-            $old_files = $this->match_files_fs( $dir, 'thermal-' . $order_id . '-' );
-            if ( $fs ) {
-                foreach ( $old_files as $file ) {
-                    if ( $fs->exists( $file ) ) {
-                        $fs->delete( $file );
-                    }
-                }
-            }
-            // Clear metadata to ensure fresh generation storage
             $order = wc_get_order( $order_id );
             if ( $order ) {
+                self::delete_recorded_file(
+                    (string) $order->get_meta( '_ogpsr_thermal_path' ),
+                    $dir,
+                    'thermal-' . $order_id . '-',
+                    '.pdf',
+                    $fs
+                );
+                // Clear metadata to ensure fresh generation storage
                 $order->delete_meta_data( '_ogpsr_thermal_path' );
                 $order->save();
             }
-            // Generate new one
-            return $this->generate_thermal( $order_id );
+            // Generate new one, ignoring any cached file for the current settings
+            $this->bypass_cache = true;
+            try {
+                return $this->generate_thermal( $order_id );
+            } finally {
+                $this->bypass_cache = false;
+            }
         }
 
         /**
@@ -334,30 +345,34 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
         public function force_regenerate_a4( $order_id ) {
             $fs = $this->init_filesystem();
             $order = wc_get_order( $order_id );
+            // An issued (locked) document is never re-rendered; the issued file is returned unchanged.
+            $issued_file = ( $order ? $this->get_issued_file( $order, '_ogpsr_a4_path' ) : '' );
+            if ( '' !== $issued_file ) {
+                return $issued_file;
+            }
             $upload_root = ( class_exists( 'OG_PSR_Security' ) ? OG_PSR_Security::resolve_upload_root() : wp_normalize_path( wp_upload_dir()['basedir'] . '/semiauto-invoicing' ) );
             $dir = ( class_exists( 'OG_PSR_Security' ) ? OG_PSR_Security::resolve_document_root( 'invoice' ) : wp_normalize_path( $upload_root . '/invoices/pdf' ) );
             $prefix = 'invoice-' . $order_id . '-';
-            $old_files = $this->match_files_fs( $dir, $prefix );
-            if ( $fs ) {
-                foreach ( $old_files as $file ) {
-                    $fname = basename( $file );
-                    $parts = explode( '-', preg_replace( '/\\.[^.]+$/', '', $fname ) );
-                    // Preserve sub-variant files with extended multi-segment naming patterns (e.g. invoice-ID-variant-hash.pdf)
-                    if ( count( $parts ) >= 4 ) {
-                        continue;
-                    }
-                    if ( $fs->exists( $file ) ) {
-                        $fs->delete( $file );
-                    }
-                }
-            }
-            // Clear metadata to ensure fresh generation storage
+            // Delete the A4 PDF recorded on the order (targeted: no directory listing; sub-variant files are untouched)
             if ( $order ) {
+                self::delete_recorded_file(
+                    (string) $order->get_meta( '_ogpsr_a4_path' ),
+                    $dir,
+                    $prefix,
+                    '.pdf',
+                    $fs
+                );
+                // Clear metadata to ensure fresh generation storage
                 $order->delete_meta_data( '_ogpsr_a4_path' );
                 $order->save();
             }
-            // Generate new one
-            return $this->generate_a4( $order_id );
+            // Generate new one, ignoring any cached file for the current settings
+            $this->bypass_cache = true;
+            try {
+                return $this->generate_a4( $order_id );
+            } finally {
+                $this->bypass_cache = false;
+            }
         }
 
         /**
@@ -368,24 +383,28 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
          */
         public function force_regenerate_packaging( $order_id ) {
             $fs = $this->init_filesystem();
-            // Delete all existing packaging slips for this order
+            // Delete the packaging slip recorded on the order (targeted: no directory listing)
             $dir = ( class_exists( 'OG_PSR_Security' ) ? OG_PSR_Security::resolve_document_root( 'packaging_slip' ) : wp_normalize_path( wp_upload_dir()['basedir'] . '/semiauto-invoicing/packaging-slips' ) );
-            $old_files = $this->match_files_fs( $dir, 'packaging-' . $order_id . '-' );
-            if ( $fs ) {
-                foreach ( $old_files as $file ) {
-                    if ( $fs->exists( $file ) ) {
-                        $fs->delete( $file );
-                    }
-                }
-            }
-            // Clear metadata to ensure fresh generation storage
             $order = wc_get_order( $order_id );
             if ( $order ) {
+                self::delete_recorded_file(
+                    (string) $order->get_meta( '_ogpsr_packaging_path' ),
+                    $dir,
+                    'packaging-' . $order_id . '-',
+                    '.pdf',
+                    $fs
+                );
+                // Clear metadata to ensure fresh generation storage
                 $order->delete_meta_data( '_ogpsr_packaging_path' );
                 $order->save();
             }
-            // Generate new one
-            return $this->generate_packaging( $order_id );
+            // Generate new one, ignoring any cached file for the current settings
+            $this->bypass_cache = true;
+            try {
+                return $this->generate_packaging( $order_id );
+            } finally {
+                $this->bypass_cache = false;
+            }
         }
 
         /**
@@ -432,7 +451,8 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_a4_show_coupon_codes', 'yes' );
                 $hash_data[] = OG_PSR_Settings::get( 'ogpsr_a4_terms_and_conditions', '' );
             }
-            return substr( md5( (string) wp_json_encode( $hash_data ) ), 0, 8 );
+            // Keyed with the site's secret salt (wp_hash), so stored file names cannot be derived from public invoice data.
+            return substr( wp_hash( (string) wp_json_encode( $hash_data ) ), 0, 8 );
         }
 
         /**
@@ -443,13 +463,17 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
          * @param string                  $content          Binary/string content to publish.
          * @param string                  $cleanup_prefix   Prefix pattern for obsolete variant cleanup in directory (e.g. 'thermal-123-').
          * @param WP_Filesystem_Base|null $fs               Optional initialized filesystem object.
+         * @param string|null             $previous_path    Path of the previous version recorded on the order. A string
+         *                                                  (empty when nothing is recorded) deletes only that file; null
+         *                                                  keeps the directory sweep for documents without a recorded path.
          * @return bool True on success, false on failure.
          */
         public static function atomic_publish(
             $destination_path,
             $content,
             $cleanup_prefix = '',
-            $fs = null
+            $fs = null,
+            $previous_path = null
         ) {
             if ( empty( $destination_path ) || empty( $content ) ) {
                 return false;
@@ -506,6 +530,20 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             if ( !$published ) {
                 return false;
             }
+            // Targeted cleanup: the order records its previous version, so only that file is removed instead of
+            // listing the whole directory (a directory sweep costs O(number of stored documents) on every publish).
+            if ( null !== $previous_path ) {
+                if ( !empty( $cleanup_prefix ) && basename( wp_normalize_path( (string) $previous_path ) ) !== $safe_filename ) {
+                    self::delete_recorded_file(
+                        (string) $previous_path,
+                        $dir,
+                        $cleanup_prefix,
+                        '.' . $ext,
+                        $fs
+                    );
+                }
+                return true;
+            }
             // Post-publish deferred cleanup of obsolete variants for this order
             if ( !empty( $cleanup_prefix ) && $fs->is_dir( $dir ) ) {
                 $dir_list = $fs->dirlist( $dir );
@@ -528,6 +566,77 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
         }
 
         /**
+         * True when the order or refund was issued and is locked (generic lock meta `_ogpsr_document_locked`).
+         * An issued document is never re-rendered: corrections are made with a new document.
+         *
+         * @param WC_Abstract_Order|null $document Order or refund.
+         * @return bool
+         */
+        public static function is_document_locked( $document ) {
+            if ( !$document instanceof WC_Abstract_Order ) {
+                return false;
+            }
+            $locked = '' !== (string) $document->get_meta( '_ogpsr_document_locked' );
+            /**
+             * Filters whether an issued document is locked.
+             *
+             * @param bool              $locked   True when the document carries the lock meta.
+             * @param WC_Abstract_Order $document Order or refund.
+             */
+            return (bool) apply_filters( 'ogpsr_document_is_locked', $locked, $document );
+        }
+
+        /**
+         * The issued file of a locked document when it is still on disk, else ''.
+         *
+         * @param WC_Abstract_Order $document Order or refund.
+         * @param string            $meta_key Path meta key, e.g. '_ogpsr_a4_path'.
+         * @return string
+         */
+        public function get_issued_file( $document, $meta_key ) {
+            if ( self::$is_preview || !self::is_document_locked( $document ) ) {
+                return '';
+            }
+            $path = wp_normalize_path( (string) $document->get_meta( $meta_key ) );
+            $fs = $this->init_filesystem();
+            if ( '' === $path || !$fs || !$fs->exists( $path ) || !class_exists( 'OG_PSR_Security' ) || !OG_PSR_Security::is_path_within( $path, OG_PSR_Security::resolve_upload_root() ) ) {
+                return '';
+            }
+            return $path;
+        }
+
+        /**
+         * Deletes one recorded document version after checking it belongs to this order and directory.
+         *
+         * @param string             $recorded_path Path recorded on the order (empty when nothing is recorded).
+         * @param string             $dir           Trusted document directory.
+         * @param string             $prefix        Order-specific filename prefix (e.g. 'thermal-123-').
+         * @param string             $extension     File extension including the dot.
+         * @param WP_Filesystem_Base $fs            Initialized filesystem object.
+         * @return bool True when a file was deleted.
+         */
+        public static function delete_recorded_file(
+            $recorded_path,
+            $dir,
+            $prefix,
+            $extension,
+            $fs
+        ) {
+            if ( '' === (string) $recorded_path || '' === (string) $prefix || !$fs ) {
+                return false;
+            }
+            $old_name = basename( wp_normalize_path( (string) $recorded_path ) );
+            // Compare resolved directories: the trusted publish directory is realpath-resolved, the recorded path may not be.
+            $old_dir = realpath( dirname( (string) $recorded_path ) );
+            $same_dir = realpath( (string) $dir );
+            $old_file = wp_normalize_path( (( $same_dir ? $same_dir : (string) $dir )) . '/' . $old_name );
+            if ( false === $old_dir || false === $same_dir || wp_normalize_path( $old_dir ) !== wp_normalize_path( $same_dir ) || 0 !== strpos( $old_name, $prefix ) || substr( $old_name, -strlen( $extension ) ) !== $extension || false !== strpos( $old_name, '.tmp.' ) || !class_exists( 'OG_PSR_Security' ) || !OG_PSR_Security::is_path_within( $old_file, OG_PSR_Security::resolve_upload_root() ) || !$fs->exists( $old_file ) ) {
+                return false;
+            }
+            return (bool) $fs->delete( $old_file );
+        }
+
+        /**
          * Generate thermal receipt PDF
          *
          * @param int $order_id WooCommerce Order ID
@@ -546,8 +655,8 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             $settings_hash = self::get_document_settings_signature( 'thermal', $order_id );
             $file = $dir . '/thermal-' . $order_id . '-' . $settings_hash . '.pdf';
             $fs = $this->init_filesystem();
-            // Check if file exists using WP_Filesystem
-            if ( $fs && $fs->exists( $file ) ) {
+            // Check if file exists using WP_Filesystem (skipped while force-regenerating)
+            if ( !$this->bypass_cache && $fs && $fs->exists( $file ) ) {
                 return $file;
             }
             // Ensure thermal subdirectory exists
@@ -600,7 +709,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 $html = preg_replace( '/>\\s+</', '><', trim( $html ) );
                 $dompdf->loadHtml( $html );
                 if ( is_array( $doc ) && class_exists( 'OG_PSR_Template_Registry' ) ) {
-                    $dynamic_rules = OG_PSR_Template_Registry::compile_document_rules( $doc );
+                    $dynamic_rules = OG_PSR_Template_Registry::compile_document_rules( $doc, $html );
                     if ( !empty( $dynamic_rules ) ) {
                         $dompdf->getCss()->load_css( $dynamic_rules );
                     }
@@ -612,7 +721,8 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                     $file,
                     $pdf_output,
                     'thermal-' . $order_id . '-',
-                    $fs
+                    $fs,
+                    (string) $order->get_meta( '_ogpsr_thermal_path' )
                 );
                 if ( !$written ) {
                     OG_PSR_Logger::error( 'Failed to write Thermal Receipt to disk.', $order_id );
@@ -646,8 +756,34 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
          * @return string|null Absolute file path or null on failure
          */
         public function generate_a4( $order_id, $invoice_number = '' ) {
-            $order = wc_get_order( $order_id );
+            // An order object is used as given (a document that is not stored, e.g. a credit note built in memory).
+            $order = ( $order_id instanceof WC_Abstract_Order ? $order_id : wc_get_order( $order_id ) );
             if ( !$order ) {
+                return null;
+            }
+            $order_id = $order->get_id();
+            /**
+             * Filters the variant of the A4 document being generated for this order (another document of the same
+             * order, such as a corrected invoice). A variant gets its own file and never replaces the order's own A4
+             * document or its records. Lowercase letters and digits.
+             *
+             * @param string            $variant Default ''.
+             * @param WC_Abstract_Order $order   Order or refund.
+             */
+            $variant = strtolower( (string) preg_replace( '/[^a-z0-9]/i', '', (string) apply_filters( 'ogpsr_a4_document_variant', '', $order ) ) );
+            // An issued (locked) document is returned as issued, whatever the current settings.
+            $issued_file = ( '' === $variant ? $this->get_issued_file( $order, '_ogpsr_a4_path' ) : '' );
+            if ( '' !== $issued_file ) {
+                return $issued_file;
+            }
+            /**
+             * Filters whether the order's own A4 invoice is withheld because another document invoices the order (for
+             * example a periodic summary invoice). A withheld invoice is not generated and gets no number.
+             *
+             * @param bool              $withheld Default false.
+             * @param WC_Abstract_Order $order    Order or refund.
+             */
+            if ( '' === $variant && !$order instanceof WC_Order_Refund && (bool) apply_filters( 'ogpsr_a4_invoice_withheld', false, $order ) ) {
                 return null;
             }
             $upload_root = ( class_exists( 'OG_PSR_Security' ) ? OG_PSR_Security::resolve_upload_root() : wp_normalize_path( wp_upload_dir()['basedir'] . '/semiauto-invoicing' ) );
@@ -661,12 +797,15 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 }
                 return null;
             }
+            if ( '' !== $variant ) {
+                $file_prefix .= $variant . '-';
+            }
             // Compute centralized settings hash for active document type
             $settings_hash = self::get_document_settings_signature( $doc_type, $order_id );
             $file = $dir . '/' . $file_prefix . $settings_hash . '.pdf';
             $fs = $this->init_filesystem();
-            // Check if file exists using WP_Filesystem
-            if ( $fs && $fs->exists( $file ) ) {
+            // Check if file exists using WP_Filesystem (skipped while force-regenerating)
+            if ( !$this->bypass_cache && $fs && $fs->exists( $file ) ) {
                 return $file;
             }
             // Ensure target directory and security files exist
@@ -712,7 +851,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 $html = preg_replace( '/>\\s+</', '><', trim( $html ) );
                 $dompdf->loadHtml( $html );
                 if ( is_array( $doc ) && class_exists( 'OG_PSR_Template_Registry' ) ) {
-                    $dynamic_rules = OG_PSR_Template_Registry::compile_document_rules( $doc );
+                    $dynamic_rules = OG_PSR_Template_Registry::compile_document_rules( $doc, $html );
                     if ( !empty( $dynamic_rules ) ) {
                         $dompdf->getCss()->load_css( $dynamic_rules );
                     }
@@ -740,11 +879,16 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                     $file,
                     $pdf_output,
                     $file_prefix,
-                    $fs
+                    $fs,
+                    ( '' === $variant ? (string) $order->get_meta( '_ogpsr_a4_path' ) : '' )
                 );
                 if ( !$written ) {
                     OG_PSR_Logger::error( 'Failed to write A4 Invoice to disk.', $order_id );
                     return null;
+                }
+                if ( '' !== $variant ) {
+                    // A variant is recorded by the caller (its own document); the order's A4 record stays as it is.
+                    return $file;
                 }
                 // Save the generated file path to order meta for caching
                 $order->update_meta_data( '_ogpsr_a4_path', $file );
@@ -786,8 +930,8 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             $settings_hash = self::get_document_settings_signature( 'packaging', $order_id );
             $file = $dir . '/packaging-' . $order_id . '-' . $settings_hash . '.pdf';
             $fs = $this->init_filesystem();
-            // Check if file exists using WP_Filesystem
-            if ( $fs && $fs->exists( $file ) ) {
+            // Check if file exists using WP_Filesystem (skipped while force-regenerating)
+            if ( !$this->bypass_cache && $fs && $fs->exists( $file ) ) {
                 return $file;
             }
             // Ensure packaging subdirectory exists
@@ -833,7 +977,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                 $html = preg_replace( '/>\\s+</', '><', trim( $html ) );
                 $dompdf->loadHtml( $html );
                 if ( is_array( $doc ) && class_exists( 'OG_PSR_Template_Registry' ) ) {
-                    $dynamic_rules = OG_PSR_Template_Registry::compile_document_rules( $doc );
+                    $dynamic_rules = OG_PSR_Template_Registry::compile_document_rules( $doc, $html );
                     if ( !empty( $dynamic_rules ) ) {
                         $dompdf->getCss()->load_css( $dynamic_rules );
                     }
@@ -861,7 +1005,8 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
                     $file,
                     $pdf_output,
                     'packaging-' . $order_id . '-',
-                    $fs
+                    $fs,
+                    (string) $order->get_meta( '_ogpsr_packaging_path' )
                 );
                 if ( !$written ) {
                     OG_PSR_Logger::error( 'Failed to write Packaging Slip to disk.', $order_id );

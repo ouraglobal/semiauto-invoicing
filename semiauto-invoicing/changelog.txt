@@ -1,5 +1,87 @@
 == Changelog ==
 
+= 8.5.0 =
+[//]: # fs_premium_only_begin
+* Premium: Document Control on the order screen: every document of an order in one tree (invoice, credit notes, corrected, services, debit, advance, final and summary invoices) with its state; issued documents are locked and changed only with a new document.
+* Premium: Corrections in the pattern each e-invoicing profile allows: corrected invoice 384 where the profile has it (XRechnung, Factur-X / Chorus Pro, BIS 3 DE to DE), otherwise a credit note and a new invoice on a linked replacement order; cancellation credit notes for orders cancelled after issue.
+* Premium: Price reductions issue a credit note through a WooCommerce refund without restock; debit notes are issued on a linked order for extra charges or extra quantities of the invoiced products (unit price agreed on the invoice; WooCommerce computes the tax and manages the stock).
+* Premium: Advance and final invoices (386 where the profile has it): advances received are invoiced with their VAT share and date, and the final invoice deducts them; an advance is credited when its order is cancelled.
+* Premium: Deposit and partial-payment plugins (Acowebs, Bayna, Deposet, DEPART, MagePeople, YITH free): every payment received gets its advance invoice, the final invoice covers the whole supply, and a cancelled payment's advance invoice is credited without changing the order.
+* Premium: Summary invoices for business customers billed periodically: a five-step wizard in Billing Documents, goods and services of an export in separate summaries, later refunds credited against the summary, and cancellation of a summary invoice with a credit note so a corrected summary can be issued.
+* Premium: Mixed export orders of goods and services are invoiced in two documents (goods G, services O), with refunds split by nature and a notice at checkout and on the order received page.
+* Premium: Payment state options: WooCommerce's paid status by default, payments confirmed by the admin for chosen payment methods (recorded in Document Control), and a per-order switch to state the open amount as due.
+* Premium: Delivery data: e-invoices whose profile requires a delivery date wait until it is entered (with the field inline in Document Control); an optional store setting holds every e-invoice until the delivery date is known.
+* Premium: Invoice Numbering Moment: numbers are taken when a document is issued for sellers in France, Spain and Norway (gap-free: drafts show no number and their e-invoice waits), or at the first PDF or e-invoice; numbers are taken only after a document validates.
+* Premium: VAT Directive art. 226 mentions on the PDF in the official wording of every EU language ("Reverse charge", margin schemes, travel agents) with exemption references for intra-community supplies and exports; new setting "Language of VAT Mentions"; PDF-only stores also get the tax breakdown.
+* Premium: Services to buyers outside the EU follow the place-of-supply rules (art. 44 / 45 / 58 / 59): new product setting "Place of Supply of the Service"; a consumer service under the general rule without VAT is refused with guidance.
+* Premium: Gateways: Storecove type codes are checked per sender before sending (documents Storecove does not accept are handled offline with the reason), the Storecove JSON carries the factoring payee, advances, debit note type and references; an accepted advance invoice no longer blocks the final invoice.
+* Premium: Alternate profiles follow the official rule gates (summary orders, split exports, superseded or changed invoices); sellers not registered in Singapore or Australia / New Zealand can issue PINT SG (NG) and PINT A-NZ (O) documents for orders without tax.
+* Premium: Accountant CSV export of all issued documents in Billing Documents, and My Account lists every document of the order for the customer.
+* Premium: PINT AE BG-3 dates follow the recorded preceding invoice; PINT JP negative invoices that cancel a summary invoice keep the summary's invoicing period.
+[//]: # fs_premium_only_end
+[//]: # fs_free_only_begin
+* Feature showcase texts updated (Billing Documents, A4 documents); no other changes to free features.
+[//]: # fs_free_only_end
+
+= 8.4.9 =
+[//]: # fs_premium_only_begin
+* Premium: Cross-border e-invoicing follows the seller's tax jurisdiction: national PINT profiles (UAE, Australia / New Zealand, Japan, Singapore, Malaysia) are issued only by sellers established or registered in that country, and other sales are issued under the seller's own profile as exports.
+* Premium: New Foreign tax registrations setting (UAE, Australia, New Zealand, Japan, Singapore, Malaysia) and a routing preview in the XML settings; the route of each order (domestic, intra-EU, public sector, registered, export, customer choice) is recorded and shown in the order box.
+* Premium: Exports outside the seller's tax territory use the official export categories: EU sellers G for goods and O for services-only orders (XRechnung with "Exporte außerhalb der EU"), PINT JP and A-NZ G, PINT SG ZR, PINT AE Z with the Exports flag; no buyer-country tax is derived on exports.
+* Premium: Buyers keep their own identifiers: the buyer tax number is written under the buyer's own scheme (VAT or GST), and income-tax numbers are left out where only VAT numbers are allowed; a seller's foreign tax registration is written as the seller VAT or tax registration identifier of each profile.
+* Premium: Checkout: the opt-in reads "Send my invoice as an e-invoice through Peppol" (unticked means PDF only, with no XML and no Peppol transmission), with notices for exports and registered sellers, a region field for UAE-seller exports to countries without states and the buyer registration number for foreign buyers of Malaysian sellers.
+* Premium: One e-invoice per buyer: StoreCove and A-Cube do not transmit a second e-invoice with the same number; A-Cube checks the receiver's Peppol capability before sending.
+* Premium: Export orders show the buyer's local currency as the second currency on the PDF, with a recorded exchange rate.
+* Premium: Malaysia: new "Malaysian Exports: Tax Category" (exempt E or outside scope O) and reason text in Tax Mapping for buyers outside Malaysia; without it these e-invoices are refused with guidance.
+* Premium: Factur-X and XRechnung (UBL and ZUGFeRD XRECHNUNG level) now issue "not subject to VAT" (O) documents as the official rules describe: no VAT identifiers (BR-O-02) and, in XRechnung, a 0 % rate on the tax breakdown (§12.4.7).
+* Premium: Order lines without a linked product in the EN 16931 profiles take their tax category from the tax class mapping, otherwise the e-invoice is refused instead of assuming goods or services (VAT Directive art. 226(6)); a category chosen in the alternate-profile window is accepted.
+* Premium: PINT JP: the JPY tax breakdown no longer repeats exempt, export or outside-scope categories (aligned-ibrp-e-01, g-01, o-01).
+* Premium: PINT JP and PINT SG no longer embed the invoice PDF, and StoreCove no longer attaches an invoice PDF copy to PINT documents, as the PINT specifications state that attaching an invoice copy is not in compliance.
+* Premium: PINT AE: the Exports flag is set only for deliveries outside the UAE without VAT, the export check follows the delivery country (ibr-152-ae), and deliveries in the buyer's own city carry the region given at checkout.
+* Premium: E-invoicing PDFs follow the document's own profile: UAE documents are titled by type (Tax Invoice, Tax Credit Note, Commercial Invoice out of scope), national profiles show the seller's registration in that country, PINT MY documents always show the BRN, SST and tourism tax numbers, and credit notes follow the profile of their order.
+* Premium: New tax breakdown on e-invoicing invoices and credit notes: tax category, rate, taxable amount, tax and the exemption, reverse charge or export reason, with the tax names of each profile (VAT, GST, consumption tax, Malaysian sales, service and tourism tax) and both amounts in the tax currency when a rate is recorded.
+* Premium: PINT JP PDFs mark reduced-rate items and explain the mark.
+* Premium: E-invoicing PDFs now show the e-invoice details they carry in the XML: delivery date, invoicing period, payment means, card, direct debit mandate, creditor identifier, debited account, payment reference, buyer accounting reference, seller contact, purchase order and exemption reason codes.
+* Premium: New A4 option "Show Tax per Line" (Additional Display Options) adds the tax rate and tax amount of each item, for every invoice and credit note or only where the e-invoicing profile requires it (PINT MY).
+* Premium: Building a document no longer saves the detected POS cashier as the order's cashier override.
+* The Receipt & Invoice Documents box on the order screen now appears below the order items instead of the sidebar.
+* Faster PDF rendering across the document engine: stylesheet rules a document does not use are skipped, and QR codes and barcodes are drawn as single vector shapes with the same modules and bars; the printed page is unchanged.
+[//]: # fs_premium_only_end
+[//]: # fs_free_only_begin
+* The Receipt & Invoice Documents box on the order screen now appears below the order items instead of the sidebar.
+* Faster PDF rendering: stylesheet rules a document does not use are skipped; the printed page is unchanged.
+[//]: # fs_free_only_end
+
+= 8.4.8 =
+[//]: # fs_premium_only_begin
+* Premium: Peppol BIS Billing 3.0 updated to the 3.0.21 rules (May 2026): electronic address scheme, currency and VAT exemption code lists, Peppol identifier format rules and Danish rules.
+* Premium: Norwegian EHF support: organisation number with MOD11 check, NO...MVA VAT numbers, Norwegian bank accounts, KID payment reference (order box) and NOK exchange rates from Norges Bank.
+* Premium: Each profile now accepts only the Peppol ID schemes of its own official code list, at checkout, in the order box and in the XML; wrong-country scheme conversions are corrected.
+* Premium: Engine refusals are kept as persistent admin notices and listed in Status & Diagnostics, with the cause and where to fix it.
+* Premium: Each document is sent through one gateway only (primary gateway first, optional fallback); a credit note follows the gateway of its invoice.
+* Premium: StoreCove delivery networks, switched on per network in the StoreCove settings: Italy SDI, Spain FACe and FACeB2B, Poland KSeF, India IRP (GST split, HSN / SAC codes, exports) and e-mail delivery for business buyers without a Peppol ID.
+* Premium: Added the FACeB2B DIRe buyer field (checkout and order box) and check-digit validation of Indian GSTINs, Spanish NIF / NIE / CIF and Italian Partita IVA numbers.
+* Premium: StoreCove fixes: enveloped submissions use the identifier format StoreCove requires, Chorus Pro SIRETs are passed to StoreCove's parser, Singapore invoices in a foreign currency are sent enveloped, a refused document gets a new idempotency key, and status events reach every document of an order.
+* Premium: Block checkout: country fields, the cross-border opt-in, the e-invoice format selectors and the buyer reference / Leitweg-ID are shown only where they apply, and the tax number label follows the billing country, as in the classic checkout.
+* Premium: Order box: SDI, Codice Fiscale, GSTIN, DIR3, DIRe and Kennitala fields are now saved with the order box Save button.
+* Premium: Document numbers: the WooCommerce order and refund numbers remain the identifiers; A4 prefixes, suffixes and the optional sequential numbering now appear identically on the PDF and in every XML profile, with a separate credit note prefix and counter.
+* Premium: The order box shows a warning, kept until dismissed, when sequential numbering is off for a seller in France, Spain or Norway, where gap-free numbering is required.
+* Premium: Dual-currency totals: new XML setting with a second currency; the rate comes from the order, a multi-currency plugin, WooCommerce or the exchange-rate service and is recorded with its source and date; no rate is assumed.
+* Premium: A-Cube tokens fetched from the settings are now kept after reload, checked against the selected environment and refreshed automatically.
+* Premium: StoreCove pre-flight checks now run before each submission and add an order note instead of blocking the document.
+* Premium: Removed the unused checkout e-invoicing opt-in; the dynamic routing checkbox remains.
+* Premium: Engine fixes: no assumed address values, XRechnung CustomizationID per KoSIT 3.0, German Leitweg-ID rule DE-R-015, EU reverse charge read from the order, PINT MY untaxed fees mapped by their tax class, UAE and Malaysian identifier formats per the official examples.
+* Premium: Order box: credit note reason, UAE billing frequency and emirate are saved with the Save button, XML generation warnings are shown, and the cash drawer setting is read correctly.
+* Premium: Premium e-mail handling is now loaded with the plugin, and all remote requests use wp_safe_remote_get.
+* Premium: A-Cube keeps separate tokens for sandbox and production, renews each environment's token automatically, and the A-Cube settings explain what to update when switching environment.
+* Premium: A-Cube transmission follows the A-Cube Peppol API: the document type is read from the XML, Factur-X / ZUGFeRD (CII) documents are refused with guidance, a rejected token is renewed and the request retried once, and a document is refused before sending when the selected legal entity does not exist in the environment or its Peppol ID differs from the seller's.
+* Premium: StoreCove shows a clear message when the recipient has no delivery route, routes French and Norwegian buyers without a Peppol ID by their SIREN / organisation number, and adds pre-flight notes for credit notes to the parent order.
+* Premium: Country prefixes of VAT identifiers are checked against the official EN 16931 BR-CO-09 code list.
+[//]: # fs_premium_only_end
+[//]: # fs_free_only_begin
+* Maintenance release with no changes to free features.
+[//]: # fs_free_only_end
+
 = 8.4.7 =
 [//]: # fs_premium_only_begin
 * Premium: XRechnung 3.0.2 now applies the official KoSIT BR-DE rules, refusing invoices that would fail them, with the cause and where to fix it; adds the preceding invoice, contract and project references and the Skonto payment terms.

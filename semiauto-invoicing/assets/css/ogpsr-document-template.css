@@ -298,17 +298,7 @@ body {
     padding-top: 12px;
 }
 
-.ogpsr-format-a4 .ogpsr-pay-btn {
-    display: inline-block;
-    background-color: #2563eb;
-    color: #ffffff;
-    font-size: 10px;
-    font-weight: bold;
-    text-decoration: none;
-    padding: 6px 14px;
-    border-radius: 4px;
-    margin-top: 6px;
-}
+
 
 .ogpsr-format-a4 .ogpsr-notes-box {
     font-size: 9px;

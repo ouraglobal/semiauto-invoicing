@@ -77,10 +77,15 @@ if ( ! class_exists( 'OG_PSR_Template_Registry' ) ) {
 		 * Compile layout declarations and dynamic typography rules for headless PDF document rendering.
 		 * Returns pure CSS content without HTML tags for programmatic Dompdf injection.
 		 * 
-		 * @param array $doc Document context view-model array.
+		 * When the rendered HTML is passed, rules whose selectors name a class the document does not use are left out:
+		 * such a selector cannot match any element, so the rendered page is identical and Dompdf has fewer rules to
+		 * apply.
+		 *
+		 * @param array  $doc  Document context view-model array.
+		 * @param string $html Rendered document HTML ('' keeps every rule).
 		 * @return string Pure sanitized CSS declarations.
 		 */
-		public static function compile_document_rules( $doc = array() ) {
+		public static function compile_document_rules( $doc = array(), $html = '' ) {
 			// Internal layout definitions loaded strictly from plugin assets via WP_Filesystem (Zero arbitrary user CSS)
 			$base_rules    = '';
 			$css_file_path = defined( 'OG_PSR_PATH' ) ? OG_PSR_PATH . 'assets/css/ogpsr-document-template.css' : dirname( dirname( __DIR__ ) ) . '/assets/css/ogpsr-document-template.css';
@@ -112,11 +117,107 @@ if ( ! class_exists( 'OG_PSR_Template_Registry' ) ) {
 
 			$body_typography = 'font-size: ' . $font_size . 'pt; line-height: ' . $line_height . ';';
 
-			return $base_rules . "\n" .
+			$rules = $base_rules . "\n" .
 					$thermal_page_rules . "\n" .
 					'body { font-family: "' . esc_attr( $font_family ) . '", "DejaVu Sans", sans-serif; color: ' . esc_attr( $font_color ) . '; ' . $body_typography . " }\n" .
 					'.ogpsr-brand-bg { background-color: ' . esc_attr( $accent_color ) . " !important; color: #ffffff !important; }\n" .
 					'.ogpsr-brand-text { color: ' . esc_attr( $accent_color ) . ' !important; }';
+
+			return ( '' !== (string) $html ) ? self::prune_unused_rules( $rules, (string) $html ) : $rules;
+		}
+
+		/**
+		 * Leaves out the CSS rules that cannot match the document: a selector naming a class that no element of the
+		 * HTML carries matches nothing. Selectors without classes, @page rules and @media blocks (pruned inside) stay.
+		 * The stylesheet uses no :not() or attribute selectors, so an absent class always means no match.
+		 *
+		 * @param string $css  Compiled CSS.
+		 * @param string $html Rendered document HTML.
+		 * @return string CSS with the matching rules only.
+		 */
+		public static function prune_unused_rules( $css, $html ) {
+			$used = array();
+			if ( preg_match_all( '/class="([^"]*)"/', $html, $matches ) ) {
+				foreach ( $matches[1] as $class_list ) {
+					foreach ( preg_split( '/\s+/', trim( $class_list ) ) as $class_name ) {
+						if ( '' !== $class_name ) {
+							$used[ $class_name ] = true;
+						}
+					}
+				}
+			}
+			$css = (string) preg_replace( '#/\*.*?\*/#s', '', $css );
+			return self::prune_rule_block( $css, $used );
+		}
+
+		/**
+		 * Prunes one block of CSS rules (the stylesheet, or the inside of an @media block).
+		 *
+		 * @param string $css  CSS rules.
+		 * @param array  $used Class names the document uses (keys).
+		 * @return string
+		 */
+		private static function prune_rule_block( $css, array $used ) {
+			$out    = '';
+			$length = strlen( $css );
+			$pos    = 0;
+			while ( $pos < $length ) {
+				$open = strpos( $css, '{', $pos );
+				if ( false === $open ) {
+					break;
+				}
+				$selector = trim( substr( $css, $pos, $open - $pos ) );
+				if ( 0 === strpos( $selector, '@media' ) ) {
+					$depth = 1;
+					$end   = $open + 1;
+					while ( $end < $length && $depth > 0 ) {
+						if ( '{' === $css[ $end ] ) {
+							++$depth;
+						} elseif ( '}' === $css[ $end ] ) {
+							--$depth;
+						}
+						++$end;
+					}
+					$inner = self::prune_rule_block( substr( $css, $open + 1, $end - $open - 2 ), $used );
+					if ( '' !== trim( $inner ) ) {
+						$out .= $selector . " {\n" . $inner . "}\n";
+					}
+					$pos = $end;
+					continue;
+				}
+				$close = strpos( $css, '}', $open );
+				if ( false === $close ) {
+					break;
+				}
+				$body = substr( $css, $open + 1, $close - $open - 1 );
+				$pos  = $close + 1;
+				if ( '' === $selector ) {
+					continue;
+				}
+				if ( '@' === $selector[0] ) {
+					$out .= $selector . ' {' . $body . "}\n";
+					continue;
+				}
+				$kept = array();
+				foreach ( explode( ',', $selector ) as $single ) {
+					$matches_document = true;
+					if ( preg_match_all( '/\.([A-Za-z0-9_-]+)/', $single, $class_matches ) ) {
+						foreach ( $class_matches[1] as $class_name ) {
+							if ( empty( $used[ $class_name ] ) ) {
+								$matches_document = false;
+								break;
+							}
+						}
+					}
+					if ( $matches_document ) {
+						$kept[] = trim( $single );
+					}
+				}
+				if ( ! empty( $kept ) ) {
+					$out .= implode( ', ', $kept ) . ' {' . $body . "}\n";
+				}
+			}
+			return $out;
 		}
 	}
 }

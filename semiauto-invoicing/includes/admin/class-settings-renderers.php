@@ -405,6 +405,17 @@ if ( !class_exists( 'OG_PSR_Settings_Renderers' ) ) {
                         __( 'Interactive Legal Entity selection & Hydra API discovery for multi-entity businesses', 'semiauto-invoicing' )
                     ),
                 ),
+                'billing'  => array(
+                    'icon'     => 'dashicons-portfolio',
+                    'title'    => __( 'Document Control & Billing Documents', 'semiauto-invoicing' ),
+                    'subtitle' => __( 'Every document of an order in one tree, issued once and kept unchanged: corrections, credit and debit notes, advance, final and summary invoices.', 'semiauto-invoicing' ),
+                    'features' => array(
+                        __( 'Corrected invoices, cancellations, price reductions and debit notes in the pattern each e-invoicing profile allows', 'semiauto-invoicing' ),
+                        __( 'Advance and final invoices, and summary invoices for business customers that can be cancelled and re-issued', 'semiauto-invoicing' ),
+                        __( 'Split export invoices for goods and services, recorded payments, and e-invoices held until the delivery data is entered', 'semiauto-invoicing' ),
+                        __( 'Locked issued documents, gap-free numbering, deletion protection and an accountant CSV export', 'semiauto-invoicing' )
+                    ),
+                ),
                 'storage'  => array(
                     'icon'     => 'dashicons-database',
                     'title'    => __( 'Document Storage & Automated Retention', 'semiauto-invoicing' ),
@@ -492,7 +503,7 @@ if ( !class_exists( 'OG_PSR_Settings_Renderers' ) ) {
                     'title' => __( 'A4 Documents Pro Add-ons', 'semiauto-invoicing' ),
                     'desc'  => sprintf( 
                         /* translators: %s: Hyperlink to Premium version */
-                        __( 'Automated Credit Notes on refunds, continuous sequential invoice numbering, Purchase Order (PO) checkout fields, and online payment links are available in the %s.', 'semiauto-invoicing' ),
+                        __( 'Automated Credit Notes on refunds, continuous sequential invoice numbering, Purchase Order (PO) checkout fields, online payment links, and the VAT reverse charge and margin scheme mentions in the official wording of every EU language are available in the %s.', 'semiauto-invoicing' ),
                         $premium_link
                      ),
                 ),

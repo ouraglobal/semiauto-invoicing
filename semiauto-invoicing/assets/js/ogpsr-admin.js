@@ -61,11 +61,15 @@
             $status.text('').removeClass('success error');
             $spinner.addClass('is-active');
 
+            // The row's own "Send email to customer" checkbox (a nested credit note row has its own).
+            var $sendEmail = $rowContainer.find('.ogpsr-send-email').first();
+
             $.post(getAjaxUrl(), {
                 action: 'ogpsr_regenerate_file',
                 order_id: order_id,
                 format: format,
-                nonce: nonce
+                nonce: nonce,
+                send_email: $sendEmail.length && $sendEmail.is(':checked') ? 'true' : 'false'
             }, function (response) {
                 if (response.success) {
                     $status.text(response.data.message || ogpsr_admin_data.strings.saved).addClass('success');

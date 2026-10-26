@@ -915,10 +915,17 @@ if ( $ogpsr_is_thermal ) {
     ?>
 
 	<!-- 5. Line Items Table -->
+	<?php 
+    $ogpsr_item_col_class = 'ogpsr-w-50';
+    $ogpsr_amount_col_class = 'ogpsr-w-20';
+    $ogpsr_show_line_tax = false;
+    ?>
 	<table class="ogpsr-items-table">
 		<thead>
 			<tr class="ogpsr-brand-bg">
-				<th class="ogpsr-w-50"><?php 
+				<th class="<?php 
+    echo esc_attr( $ogpsr_item_col_class );
+    ?>"><?php 
     esc_html_e( 'Item Description', 'semiauto-invoicing' );
     ?></th>
 				<th class="ogpsr-text-center ogpsr-w-10"><?php 
@@ -933,10 +940,16 @@ if ( $ogpsr_is_thermal ) {
 				<?php 
     } else {
         ?>
-					<th class="ogpsr-text-right ogpsr-w-20"><?php 
+					<th class="ogpsr-text-right <?php 
+        echo esc_attr( $ogpsr_amount_col_class );
+        ?>"><?php 
         esc_html_e( 'Unit Price', 'semiauto-invoicing' );
         ?></th>
-					<th class="ogpsr-text-right ogpsr-w-20"><?php 
+					<?php 
+        ?>
+					<th class="ogpsr-text-right <?php 
+        echo esc_attr( $ogpsr_amount_col_class );
+        ?>"><?php 
         esc_html_e( 'Amount', 'semiauto-invoicing' );
         ?></th>
 				<?php 
@@ -960,6 +973,8 @@ if ( $ogpsr_is_thermal ) {
 						<span class="ogpsr-fw-bold"><?php 
         echo esc_html( $ogpsr_item['name'] );
         ?></span>
+						<?php 
+        ?>
 						<?php 
         if ( !empty( $ogpsr_item['description'] ) ) {
             ?>
@@ -1029,6 +1044,8 @@ if ( $ogpsr_is_thermal ) {
 						<td class="ogpsr-text-right ogpsr-v-top"><?php 
             echo wp_kses_post( $ogpsr_item['unit_price'] );
             ?></td>
+						<?php 
+            ?>
 						<td class="ogpsr-text-right ogpsr-v-top ogpsr-fw-bold"><?php 
             echo wp_kses_post( $ogpsr_item['subtotal'] );
             ?></td>
@@ -1220,6 +1237,9 @@ if ( $ogpsr_is_thermal ) {
     ?>
 		</tr>
 	</table>
+
+	<?php 
+    ?>
 
 	<?php 
     if ( !empty( $ogpsr_doc['terms_html'] ) && 'packaging_slip' !== $ogpsr_doc_type ) {

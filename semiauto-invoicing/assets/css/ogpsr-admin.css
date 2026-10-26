@@ -172,8 +172,7 @@
 .ogpsr-label-block { display: block; margin-bottom: 4px; }
 .ogpsr-color-muted { color: #72777c !important; }
 .ogpsr-icon-16 { font-size: 16px !important; width: 16px !important; height: 16px !important; line-height: 16px !important; }
-.ogpsr-bridge-link { text-decoration: none; color: #72777c; transition: color 0.2s; }
-.ogpsr-bridge-link:hover { color: #2271b1 !important; }
+
 .ogpsr-border-top { border-top: 1px solid #ccd0d4; }
 .ogpsr-flex-center { display: flex; align-items: center; }
 .ogpsr-mr-5 { margin-right: 5px; }
@@ -415,13 +414,7 @@
     border: 1px solid #fee2e2;
 }
 
-.ogpsr-status-badge--locked {
-    background: #f8fafc;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
-    font-size: 11px;
-    letter-spacing: 0.2px;
-}
+
 
 .ogpsr-tools-flex {
     display: flex;
@@ -493,9 +486,7 @@
     font-size: 11px;
 }
 
-#ogpsr-bulk-download-btn .dashicons {
-    margin-top: 3px;
-}
+
 
 /* Order List Custom Action Buttons */
 .ogpsr-order-list-actions-wrapper {

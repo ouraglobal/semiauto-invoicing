@@ -3,7 +3,7 @@ Contributors: salmansh169
 Tags: woocommerce, thermal receipt, packaging, pdf invoice, e-invoicing
 Requires at least: 6.0
 Tested up to: 7.1
-Stable tag: 8.4.8
+Stable tag: 8.5.1
 Requires PHP: 8.0
 WC requires at least: 10.0.0
 WC tested up to: 11.2.1
@@ -90,7 +90,10 @@ SemiAuto Invoicing supports PNG, WebP, and JPEG images. For optimal print clarit
 
 == Upgrade Notice ==
 
-= 8.4.8 =
+= 8.5.1 =
+Security hardening of stored documents and Freemius SDK 2.13.5.
+
+= 8.5.0 =
 Maintenance release.
 
 
@@ -102,10 +105,11 @@ Maintenance release.
 
 == Changelog ==
 
-= 8.4.8 =
-* Maintenance release with no changes to free features.
+= 8.5.1 =
+* Security: stored document file names are keyed with the site's secret salt, and every file response is sent with "X-Content-Type-Options: nosniff" (inline responses of variable type are also sandboxed).
+* Freemius SDK updated to 2.13.5.
 
-[See changelog.txt for full release history prior to v8.4.8]
+[See changelog.txt for full release history prior to v8.5.1]
 
 == Third-Party Libraries & Copyright ==
 

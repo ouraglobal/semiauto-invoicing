@@ -133,6 +133,9 @@ if ( !class_exists( 'OG_PSR_Settings_AJAX' ) ) {
                         $email_sent = OG_PSR_Settings_Helpers::send_to_customer_email( $order_id, $file_path, $format );
                     }
                     $msg = __( 'File regenerated successfully.', 'semiauto-invoicing' );
+                    if ( 'a4' === $format && OG_PSR_PDF_Generator::is_document_locked( wc_get_order( $order_id ) ) ) {
+                        $msg = __( 'This document was issued, so it was kept unchanged. Corrections are made with a new document.', 'semiauto-invoicing' );
+                    }
                     if ( $send_email ) {
                         $msg .= ( $email_sent ? ' ' . __( 'Email sent to customer.', 'semiauto-invoicing' ) : ' ' . __( 'Email sending failed.', 'semiauto-invoicing' ) );
                     }

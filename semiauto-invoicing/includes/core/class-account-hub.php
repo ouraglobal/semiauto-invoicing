@@ -180,7 +180,8 @@ if ( !class_exists( 'OG_PSR_Account_Hub' ) ) {
                     echo '<td><span class="ogpsr-order-date">' . esc_html( wc_format_datetime( $order->get_date_created() ) ) . '</span></td>';
                     echo '<td><span class="ogpsr-order-status ogpsr-order-status--' . esc_attr( sanitize_html_class( $order->get_status() ) ) . '">' . esc_html( ( function_exists( 'wc_get_order_status_name' ) ? wc_get_order_status_name( $order->get_status() ) : ucfirst( $order->get_status() ) ) ) . '</span></td>';
                     echo '<td class="ogpsr-hub-actions"><div class="ogpsr-actions-flex">';
-                    if ( in_array( 'a4', $enabled_formats, true ) ) {
+                    // No link to an invoice another document covers (filter ogpsr_a4_invoice_withheld, see OG_PSR_PDF_Generator).
+                    if ( in_array( 'a4', $enabled_formats, true ) && !(bool) apply_filters( 'ogpsr_a4_invoice_withheld', false, $order ) ) {
                         echo '<a href="' . esc_url( OG_PSR_Download_Handler::get_download_url( $order->get_id(), 'a4' ) ) . '" class="ogpsr-hub-btn" title="' . esc_attr__( 'Download A4 Invoice', 'semiauto-invoicing' ) . '">';
                         echo '<span class="dashicons dashicons-pdf"></span>';
                         echo '<span class="btn-text">' . esc_html__( 'Invoice', 'semiauto-invoicing' ) . '</span>';

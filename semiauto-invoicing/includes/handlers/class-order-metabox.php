@@ -21,7 +21,8 @@ if ( !class_exists( 'OG_PSR_Order_Metabox' ) ) {
         }
 
         /**
-         * Register the metabox on the shop_order post type.
+         * Register the metabox on the shop_order post type, in the main column below the order items
+         * (WooCommerce registers order data and items with high priority, this box with default priority).
          */
         public function add_metabox() {
             add_meta_box(
@@ -29,7 +30,7 @@ if ( !class_exists( 'OG_PSR_Order_Metabox' ) ) {
                 __( 'Receipt & Invoice Documents', 'semiauto-invoicing' ),
                 array($this, 'render_metabox'),
                 'shop_order',
-                'side',
+                'normal',
                 'default'
             );
             // Support for HPOS (High-Performance Order Storage)
@@ -38,7 +39,7 @@ if ( !class_exists( 'OG_PSR_Order_Metabox' ) ) {
                 __( 'Receipt & Invoice Documents', 'semiauto-invoicing' ),
                 array($this, 'render_metabox'),
                 'woocommerce_page_wc-orders',
-                'side',
+                'normal',
                 'default'
             );
         }
@@ -97,37 +98,54 @@ if ( !class_exists( 'OG_PSR_Order_Metabox' ) ) {
                 echo '</div>';
             }
             if ( in_array( 'a4', $enabled_formats, true ) ) {
-                $a4_exists = $this->check_pdf_exists( $order, 'a4' );
-                echo '<div class="ogpsr-pdf-item" data-format="a4">';
-                echo '  <div class="ogpsr-pdf-title">';
-                echo '      <span class="ogpsr-dot ' . (( $a4_exists ? 'success' : 'missing' )) . '">●</span> ';
-                echo esc_html__( 'Primary Order Invoice', 'semiauto-invoicing' );
-                echo '      <span class="spinner ogpsr-spinner"></span>';
-                echo '  </div>';
-                echo '  <div class="ogpsr-pdf-status ' . esc_attr( ( $a4_exists ? 'exists' : 'missing' ) ) . '">';
-                echo ( $a4_exists ? esc_html__( 'Status: Generated', 'semiauto-invoicing' ) : esc_html__( 'Status: Not Generated', 'semiauto-invoicing' ) );
-                echo '  </div>';
-                echo '  <div class="ogpsr-pdf-actions">';
-                echo '      <button type="button" class="button button-primary ogpsr-regenerate-btn" data-order-id="' . esc_attr( $order_id ) . '" data-format="a4" data-nonce="' . esc_attr( wp_create_nonce( 'ogpsr_regenerate_file' ) ) . '">';
-                echo ( $a4_exists ? esc_html__( 'Regenerate', 'semiauto-invoicing' ) : esc_html__( 'Generate', 'semiauto-invoicing' ) );
-                echo '      </button>';
-                echo '      <a href="' . esc_url( OG_PSR_Download_Handler::get_download_url( $order_id, 'a4' ) ) . '" class="button ogpsr-download-link ' . (( $a4_exists ? '' : 'ogpsr-hide' )) . '" target="_blank">';
-                echo esc_html__( 'Download', 'semiauto-invoicing' );
-                echo '      </a>';
-                echo '  </div>';
-                if ( $a4_exists && $store_details_changed ) {
-                    echo '<div class="ogpsr-store-diff-notice">';
-                    echo '    <span class="dashicons dashicons-info"></span>';
-                    echo '    <span>' . esc_html__( 'This document was generated with different store details. Regenerating will update store details to current.', 'semiauto-invoicing' ) . '</span>';
+                /**
+                 * Filters whether the primary invoice row is shown (another section may render the invoice instead).
+                 *
+                 * @param bool     $show  Default true.
+                 * @param WC_Order $order Order.
+                 */
+                if ( apply_filters( 'ogpsr_show_primary_invoice_row', true, $order ) ) {
+                    $a4_exists = $this->check_pdf_exists( $order, 'a4' );
+                    $a4_locked = $a4_exists && OG_PSR_PDF_Generator::is_document_locked( $order );
+                    echo '<div class="ogpsr-pdf-item" data-format="a4">';
+                    echo '  <div class="ogpsr-pdf-title">';
+                    echo '      <span class="ogpsr-dot ' . (( $a4_exists ? 'success' : 'missing' )) . '">●</span> ';
+                    echo esc_html__( 'Primary Order Invoice', 'semiauto-invoicing' );
+                    echo '      <span class="spinner ogpsr-spinner"></span>';
+                    echo '  </div>';
+                    echo '  <div class="ogpsr-pdf-status ' . esc_attr( ( $a4_exists ? 'exists' : 'missing' ) ) . '">';
+                    if ( $a4_locked ) {
+                        echo esc_html__( 'Status: Issued (locked)', 'semiauto-invoicing' );
+                    } else {
+                        echo ( $a4_exists ? esc_html__( 'Status: Generated', 'semiauto-invoicing' ) : esc_html__( 'Status: Not Generated', 'semiauto-invoicing' ) );
+                    }
+                    echo '  </div>';
+                    echo '  <div class="ogpsr-pdf-actions">';
+                    echo '      <button type="button" class="button button-primary ogpsr-regenerate-btn" data-order-id="' . esc_attr( $order_id ) . '" data-format="a4" data-nonce="' . esc_attr( wp_create_nonce( 'ogpsr_regenerate_file' ) ) . '">';
+                    if ( $a4_locked ) {
+                        echo esc_html__( 'Get Issued Copy', 'semiauto-invoicing' );
+                    } else {
+                        echo ( $a4_exists ? esc_html__( 'Regenerate', 'semiauto-invoicing' ) : esc_html__( 'Generate', 'semiauto-invoicing' ) );
+                    }
+                    echo '      </button>';
+                    echo '      <a href="' . esc_url( OG_PSR_Download_Handler::get_download_url( $order_id, 'a4' ) ) . '" class="button ogpsr-download-link ' . (( $a4_exists ? '' : 'ogpsr-hide' )) . '" target="_blank">';
+                    echo esc_html__( 'Download', 'semiauto-invoicing' );
+                    echo '      </a>';
+                    echo '  </div>';
+                    if ( $a4_exists && $store_details_changed && !$a4_locked ) {
+                        echo '<div class="ogpsr-store-diff-notice">';
+                        echo '    <span class="dashicons dashicons-info"></span>';
+                        echo '    <span>' . esc_html__( 'This document was generated with different store details. Regenerating will update store details to current.', 'semiauto-invoicing' ) . '</span>';
+                        echo '</div>';
+                    }
+                    echo '  <div class="ogpsr-mt-5">';
+                    echo '      <label>';
+                    echo '          <input type="checkbox" class="ogpsr-send-email" />';
+                    echo esc_html__( 'Send email to customer', 'semiauto-invoicing' );
+                    echo '      </label>';
+                    echo '  </div>';
                     echo '</div>';
                 }
-                echo '  <div class="ogpsr-mt-5">';
-                echo '      <label>';
-                echo '          <input type="checkbox" class="ogpsr-send-email" />';
-                echo esc_html__( 'Send email to customer', 'semiauto-invoicing' );
-                echo '      </label>';
-                echo '  </div>';
-                echo '</div>';
             }
             if ( in_array( 'packaging', $enabled_formats, true ) ) {
                 $pkg_exists = $this->check_pdf_exists( $order, 'packaging' );

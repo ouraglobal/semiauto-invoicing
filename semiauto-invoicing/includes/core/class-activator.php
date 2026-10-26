@@ -137,15 +137,59 @@ class OG_PSR_Activator {
             return;
         }
         global $wpdb;
+        // Issued invoices and credit notes must be retained: when documents were issued, their records, numbers,
+        // numbering counters and files are kept (read before the options are deleted).
+        $keep_issued = 'yes' === get_option( 'ogpsr_documents_issued', 'no' );
+        $keep_meta = array(
+            '_ogpsr_document_ledger',
+            '_ogpsr_document_locked',
+            '_ogpsr_invoice_number',
+            '_ogpsr_credit_note_number',
+            '_ogpsr_a4_path',
+            '_ogpsr_xml_invoice_path',
+            '_ogpsr_xml_file_path',
+            '_ogpsr_xml_profile_paths',
+            '_ogpsr_companion_pdf_paths'
+        );
+        $keep_opts = array(
+            'ogpsr_documents_issued',
+            'ogpsr_next_sequential_number',
+            'ogpsr_a4_invoice_counter',
+            'ogpsr_a4_cn_counter',
+            'ogpsr_thermal_receipt_counter'
+        );
         // 1. Delete Options
         $like_options = $wpdb->esc_like( 'ogpsr_' ) . '%';
+        $ko = ( $keep_issued ? $keep_opts : array_fill( 0, 5, '' ) );
+        $km = ( $keep_issued ? $keep_meta : array_fill( 0, 9, '' ) );
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Uninstall cleanup of plugin-prefixed rows (LIKE match); no core API deletes by key prefix.
-        $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like_options ) );
+        $wpdb->query( $wpdb->prepare(
+            "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s AND option_name NOT IN ( %s, %s, %s, %s, %s )",
+            $like_options,
+            $ko[0],
+            $ko[1],
+            $ko[2],
+            $ko[3],
+            $ko[4]
+        ) );
         // 2. Delete Post Meta
         $like_pm_psr = $wpdb->esc_like( 'ogpsr_' ) . '%';
         $like_pm_upsr = $wpdb->esc_like( '_ogpsr_' ) . '%';
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Uninstall cleanup of plugin-prefixed rows (LIKE match); no core API deletes by key prefix.
-        $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE %s OR meta_key LIKE %s", $like_pm_psr, $like_pm_upsr ) );
+        $wpdb->query( $wpdb->prepare(
+            "DELETE FROM {$wpdb->postmeta} WHERE ( meta_key LIKE %s OR meta_key LIKE %s ) AND meta_key NOT IN ( %s, %s, %s, %s, %s, %s, %s, %s, %s )",
+            $like_pm_psr,
+            $like_pm_upsr,
+            $km[0],
+            $km[1],
+            $km[2],
+            $km[3],
+            $km[4],
+            $km[5],
+            $km[6],
+            $km[7],
+            $km[8]
+        ) );
         // 3. HPOS Meta Cleanup
         $order_meta_table = "{$wpdb->prefix}wc_orders_meta";
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Uninstall cleanup of plugin-prefixed rows (LIKE match); no core API deletes by key prefix.
@@ -155,7 +199,20 @@ class OG_PSR_Activator {
             // Table names cannot be parameterised via prepare(); esc_sql() is the correct hardening method here.
             $safe_table = esc_sql( $order_meta_table );
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Uninstall cleanup of plugin-prefixed rows (LIKE match); no core API deletes by key prefix.
-            $wpdb->query( $wpdb->prepare( "DELETE FROM `{$safe_table}` WHERE meta_key LIKE %s OR meta_key LIKE %s", $like_psr, $like_upsr ) );
+            $wpdb->query( $wpdb->prepare(
+                "DELETE FROM `{$safe_table}` WHERE ( meta_key LIKE %s OR meta_key LIKE %s ) AND meta_key NOT IN ( %s, %s, %s, %s, %s, %s, %s, %s, %s )",
+                $like_psr,
+                $like_upsr,
+                $km[0],
+                $km[1],
+                $km[2],
+                $km[3],
+                $km[4],
+                $km[5],
+                $km[6],
+                $km[7],
+                $km[8]
+            ) );
         }
         // 4. Delete Files (Strictly scoped to plugin's dedicated upload namespace)
         $upload_dir = wp_upload_dir();
@@ -167,7 +224,23 @@ class OG_PSR_Activator {
         }
         if ( class_exists( 'OG_PSR_Security' ) && OG_PSR_Security::is_path_within( $receipts_dir, $upload_dir['basedir'] ) ) {
             if ( $wp_filesystem && $wp_filesystem->exists( $receipts_dir ) ) {
-                $wp_filesystem->delete( $receipts_dir, true );
+                if ( $keep_issued ) {
+                    // Keep the issued invoice and credit note folders; delete every other document folder and file.
+                    $children = $wp_filesystem->dirlist( $receipts_dir );
+                    foreach ( ( is_array( $children ) ? array_keys( $children ) : array() ) as $child ) {
+                        if ( !in_array( $child, array(
+                            'invoices',
+                            'credit-notes',
+                            'index.php',
+                            '.htaccess',
+                            'web.config'
+                        ), true ) ) {
+                            $wp_filesystem->delete( trailingslashit( $receipts_dir ) . $child, true );
+                        }
+                    }
+                } else {
+                    $wp_filesystem->delete( $receipts_dir, true );
+                }
             }
         }
     }

@@ -75,6 +75,11 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
                     'icon'   => 'dashicons-admin-links',
                     'method' => 'get_gateways_settings',
                 ),
+                'billing'   => array(
+                    'label'  => __( 'Billing Documents', 'semiauto-invoicing' ),
+                    'icon'   => 'dashicons-portfolio',
+                    'method' => 'get_billing_settings',
+                ),
                 'status'    => array(
                     'label'  => __( 'Status & Diagnostics', 'semiauto-invoicing' ),
                     'icon'   => 'dashicons-info-outline',
@@ -164,9 +169,15 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
                 'xml',
                 'barcode',
                 'extras',
-                'gateways'
+                'gateways',
+                'billing'
             ), true );
-            $hide_preview = $is_showcase || in_array( $section, array('status', 'gateways', 'storage'), true );
+            $hide_preview = $is_showcase || in_array( $section, array(
+                'status',
+                'gateways',
+                'storage',
+                'billing'
+            ), true );
             $layout_classes = array();
             if ( $hide_preview ) {
                 $layout_classes[] = 'ogpsr-hide-preview';
@@ -337,6 +348,11 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
             if ( $file_path && $wp_filesystem && $wp_filesystem->exists( $file_path ) && class_exists( 'OG_PSR_Security' ) && OG_PSR_Security::is_path_within( $file_path, $base_dir ) ) {
                 $content_type = 'application/pdf';
                 header( 'Content-Type: ' . $content_type );
+                header( 'X-Content-Type-Options: nosniff' );
+                // Rendered inline: XML / JSON is shown in a sandbox (no scripts); PDFs keep the browser viewer.
+                if ( false === strpos( (string) $content_type, 'pdf' ) ) {
+                    header( 'Content-Security-Policy: sandbox' );
+                }
                 $disposition = ( isset( $_GET['download'] ) && '1' === $_GET['download'] ? 'attachment' : 'inline' );
                 header( 'Content-Disposition: ' . $disposition . '; filename="' . $filename . '"' );
                 header( 'Content-Transfer-Encoding: binary' );

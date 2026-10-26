@@ -620,7 +620,7 @@ class OG_PSR_Settings_Definitions {
             'name'     => __( 'Delete All Data on Uninstall', 'semiauto-invoicing' ),
             'type'     => 'checkbox',
             'id'       => 'ogpsr_delete_on_uninstall',
-            'desc'     => __( 'When enabled, all plugin settings, cached PDFs, and related data will be permanently deleted when the plugin is uninstalled. This action cannot be undone.', 'semiauto-invoicing' ),
+            'desc'     => __( 'When enabled, all plugin settings, cached PDFs, and related data will be permanently deleted when the plugin is uninstalled. This action cannot be undone. Issued invoices and credit notes, their numbers and the numbering counters are kept, because invoices must be retained.', 'semiauto-invoicing' ),
             'default'  => 'no',
             'desc_tip' => true,
         );
@@ -651,6 +651,19 @@ class OG_PSR_Settings_Definitions {
 
     /**
      * Peppol Gateways Settings.
+     *
+     * @return array
+     */
+    public static function get_billing_settings() {
+        return array(array(
+            'type'     => 'ogpsr_showcase_banner',
+            'id'       => 'ogpsr_billing_showcase',
+            'showcase' => 'billing',
+        ));
+    }
+
+    /**
+     * Peppol Gateways settings (PRO feature delegation; Free shows the Feature Showcase).
      *
      * @return array
      */

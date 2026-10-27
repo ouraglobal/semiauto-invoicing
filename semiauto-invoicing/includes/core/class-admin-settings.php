@@ -108,6 +108,18 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
             add_filter( 'woocommerce_settings_tabs_array', array(__CLASS__, 'add_settings_tab'), 60 );
             add_action( 'woocommerce_settings_tabs_pdf_smart_receipts', array(__CLASS__, 'settings_tab') );
             add_action( 'woocommerce_update_options_pdf_smart_receipts', array(__CLASS__, 'update_settings') );
+            add_filter(
+                'woocommerce_admin_settings_sanitize_option_ogpsr_thermal_terms_and_conditions',
+                array(__CLASS__, 'sanitize_terms_option'),
+                10,
+                3
+            );
+            add_filter(
+                'woocommerce_admin_settings_sanitize_option_ogpsr_a4_terms_and_conditions',
+                array(__CLASS__, 'sanitize_terms_option'),
+                10,
+                3
+            );
             add_action( 'woocommerce_admin_field_ogpsr_image_upload', array('OG_PSR_Settings_Renderers', 'render_image_upload_field') );
             add_action( 'woocommerce_admin_field_ogpsr_system_status', array('OG_PSR_Settings_Renderers', 'render_system_status_field') );
             add_action( 'woocommerce_admin_field_ogpsr_compliance_disclaimer', array('OG_PSR_Settings_Renderers', 'render_compliance_disclaimer_field') );
@@ -198,6 +210,21 @@ if ( !class_exists( 'OG_PSR_Settings' ) ) {
                 OG_PSR_Settings_Renderers::render_live_preview_column( $section );
             }
             echo '</div>';
+        }
+
+        /**
+         * Saves the Terms & Conditions fields as plain text.
+         *
+         * Line breaks typed with Enter are kept; every HTML tag or code is removed.
+         *
+         * @param mixed $value     Value sanitized by WooCommerce.
+         * @param array $option    Setting definition.
+         * @param mixed $raw_value Unslashed submitted value.
+         * @return string Plain text terms.
+         */
+        public static function sanitize_terms_option( $value, $option, $raw_value ) {
+            unset($value, $option);
+            return ( is_string( $raw_value ) ? sanitize_textarea_field( $raw_value ) : '' );
         }
 
         /**

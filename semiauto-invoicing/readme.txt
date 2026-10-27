@@ -3,7 +3,7 @@ Contributors: salmansh169
 Tags: woocommerce, thermal receipt, packaging, pdf invoice, e-invoicing
 Requires at least: 6.0
 Tested up to: 7.1
-Stable tag: 8.5.2
+Stable tag: 8.5.3
 Requires PHP: 8.0
 WC requires at least: 10.0.0
 WC tested up to: 11.2.1
@@ -103,8 +103,8 @@ SemiAuto Invoicing supports PNG, WebP, and JPEG images. For optimal print clarit
 
 == Upgrade Notice ==
 
-= 8.5.2 =
-Documents set for the "Refunded order" e-mail are also attached to partial refund e-mails.
+= 8.5.3 =
+Terms & Conditions keep their line breaks, tax rows show their rate, and address lines no longer show a stray comma.
 
 == Screenshots ==
 
@@ -115,10 +115,14 @@ Documents set for the "Refunded order" e-mail are also attached to partial refun
 
 == Changelog ==
 
-= 8.5.2 =
-* Documents attached to the "Refunded order" e-mail are now also attached to WooCommerce's partial refund e-mail.
+= 8.5.3 =
+* Custom Terms & Conditions (thermal and A4): every new line typed with Enter now starts a new line on the document and in the live preview. The field is plain text only: HTML, scripts and code are removed when it is saved and when it is printed, and shortcodes print as typed text.
+* Tax rows on receipts and invoices show the rate charged on the order, e.g. "VAT (5%)"; the rows, their order and the amounts stay exactly as on the WooCommerce order and e-mails. Rates edited or deleted later do not change existing documents.
+* Address lines no longer show a comma before the country when city, state and postcode are empty, nor a space before the comma; the shipping country and state print by name instead of their codes.
+* PDFs keep the space before WooCommerce's "(includes … tax)" note when prices are shown including tax.
+* Admin: button icons line up with the button text again on WordPress 7 (its button styles pushed smaller icons below the text).
 
-[See changelog.txt for full release history prior to v8.5.2]
+[See changelog.txt for full release history prior to v8.5.3]
 
 == Third-Party Libraries & Copyright ==
 

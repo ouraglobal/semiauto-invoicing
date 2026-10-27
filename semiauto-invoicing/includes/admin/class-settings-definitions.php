@@ -219,7 +219,7 @@ class OG_PSR_Settings_Definitions {
             'type'     => 'textarea',
             'id'       => 'ogpsr_thermal_terms_and_conditions',
             'default'  => '',
-            'desc'     => __( 'Add custom legal terms or any other notice to the thermal receipt footer.', 'semiauto-invoicing' ),
+            'desc'     => __( 'Add custom legal terms or any other notice to the thermal receipt footer. Press Enter to start a new line; each line appears on its own line on the receipt. Plain text only: any HTML or code is removed.', 'semiauto-invoicing' ),
             'desc_tip' => true,
         );
         $settings[] = array(
@@ -409,7 +409,7 @@ class OG_PSR_Settings_Definitions {
             'type'     => 'textarea',
             'id'       => 'ogpsr_a4_terms_and_conditions',
             'default'  => '',
-            'desc'     => __( 'Add custom terms and conditions or any additional notice to the A4 invoice footer.', 'semiauto-invoicing' ),
+            'desc'     => __( 'Add custom terms and conditions or any additional notice to the A4 invoice footer. Press Enter to start a new line; each line appears on its own line on the document. Plain text only: any HTML or code is removed.', 'semiauto-invoicing' ),
             'desc_tip' => true,
         );
         $settings[] = array(

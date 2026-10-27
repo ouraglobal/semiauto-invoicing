@@ -1,5 +1,15 @@
 == Changelog ==
 
+= 8.5.2 =
+[//]: # fs_premium_only_begin
+* Premium: Partial refunds: WooCommerce's partial refund e-mail now carries the credit note when "Refunded order" is selected for credit notes, and every refund e-mail carries only the credit note of that refund.
+* Premium: An invoice generated for an e-mail is issued (and numbered, where numbers are taken at issue) when it is e-mailed, so the customer never receives a draft invoice; this also works with HPOS and persistent object caches.
+* Premium: Restoring the refund of a partial credit note no longer sends a refund e-mail to the customer.
+* Premium: Kitchen copy e-mails refuse a recipient address that would be changed by sanitizing, instead of sending to a rewritten address.
+* Premium: E-invoicing engine: strict comparisons and unused variables removed (no change to the documents).
+[//]: # fs_premium_only_end
+* Documents attached to the "Refunded order" e-mail are now also attached to WooCommerce's partial refund e-mail.
+
 = 8.5.1 =
 [//]: # fs_premium_only_begin
 * Premium: New product field "Price Base Quantity (e-invoice)": items priced per 100, per 1000 or another quantity state their price per base quantity in every e-invoicing profile (BT-149 / BT-150); line totals still come from WooCommerce.

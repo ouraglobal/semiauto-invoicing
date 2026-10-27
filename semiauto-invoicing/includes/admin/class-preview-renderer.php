@@ -129,6 +129,8 @@ class OG_PSR_Preview_Renderer {
                     'ogpsr_footer_text',
                     'ogpsr_terms_text',
                     'ogpsr_thermal_footer_text',
+                    'ogpsr_thermal_terms_and_conditions',
+                    'ogpsr_a4_terms_and_conditions',
                     'ogpsr_packaging_notes',
                     'ogpsr_custom_fees_data',
                     'ogpsr_staff_roster_data',

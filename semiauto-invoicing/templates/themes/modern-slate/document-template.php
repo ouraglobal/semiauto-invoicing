@@ -77,15 +77,13 @@ if ( $ogpsr_is_thermal ) {
     $ogpsr_render_thermal_city = !empty( $ogpsr_seller['city'] );
     if ( $ogpsr_render_thermal_city ) {
         ?>
-			<div class="ogpsr-thermal-meta-row"><?php 
-        echo esc_html( trim( $ogpsr_seller['city'] . ' ' . $ogpsr_seller['postcode'] ) );
-        ?>
 			<?php 
-        if ( !empty( $ogpsr_seller['country'] ) ) {
-            echo ', ' . esc_html( $ogpsr_seller['country'] );
-        }
+        // City and postcode, then the country; the comma only between parts that are set.
+        $ogpsr_locality = implode( ' ', array_filter( array((string) ($ogpsr_seller['city'] ?? ''), (string) ($ogpsr_seller['postcode'] ?? '')), 'strlen' ) );
         ?>
-			</div>
+			<div class="ogpsr-thermal-meta-row"><?php 
+        echo esc_html( implode( ', ', array_filter( array($ogpsr_locality, (string) ($ogpsr_seller['country'] ?? '')), 'strlen' ) ) );
+        ?></div>
 		<?php 
     }
     ?>
@@ -518,12 +516,9 @@ if ( $ogpsr_is_thermal ) {
     }
     ?>
 					<?php 
-    echo esc_html( trim( $ogpsr_seller['city'] . ' ' . $ogpsr_seller['state'] . ' ' . $ogpsr_seller['postcode'] ) );
-    ?>
-					<?php 
-    if ( !empty( $ogpsr_seller['country'] ) ) {
-        echo ', ' . esc_html( $ogpsr_seller['country'] );
-    }
+    // City, state and postcode, then the country; the comma only between parts that are set.
+    $ogpsr_locality = implode( ' ', array_filter( array((string) ($ogpsr_seller['city'] ?? ''), (string) ($ogpsr_seller['state'] ?? ''), (string) ($ogpsr_seller['postcode'] ?? '')), 'strlen' ) );
+    echo esc_html( implode( ', ', array_filter( array($ogpsr_locality, (string) ($ogpsr_seller['country'] ?? '')), 'strlen' ) ) );
     ?>
 					<?php 
     if ( !empty( $ogpsr_seller['contact'] ) ) {
@@ -770,12 +765,9 @@ if ( $ogpsr_is_thermal ) {
     }
     ?>
 						<?php 
-    echo esc_html( trim( $ogpsr_buyer['city'] . ' ' . $ogpsr_buyer['state'] . ' ' . $ogpsr_buyer['postcode'] ) );
-    ?>
-						<?php 
-    if ( !empty( $ogpsr_buyer['country'] ) ) {
-        echo ', ' . esc_html( $ogpsr_buyer['country'] );
-    }
+    // City, state and postcode, then the country; the comma only between parts that are set.
+    $ogpsr_locality = implode( ' ', array_filter( array((string) ($ogpsr_buyer['city'] ?? ''), (string) ($ogpsr_buyer['state'] ?? ''), (string) ($ogpsr_buyer['postcode'] ?? '')), 'strlen' ) );
+    echo esc_html( implode( ', ', array_filter( array($ogpsr_locality, (string) ($ogpsr_buyer['country'] ?? '')), 'strlen' ) ) );
     ?>
 						<?php 
     if ( !empty( $ogpsr_buyer['phone'] ) ) {
@@ -851,12 +843,9 @@ if ( $ogpsr_is_thermal ) {
         }
         ?>
 							<?php 
-        echo esc_html( trim( $ogpsr_shipping['city'] . ' ' . $ogpsr_shipping['state'] . ' ' . $ogpsr_shipping['postcode'] ) );
-        ?>
-							<?php 
-        if ( !empty( $ogpsr_shipping['country'] ) ) {
-            echo ', ' . esc_html( $ogpsr_shipping['country'] );
-        }
+        // City, state and postcode, then the country; the comma only between parts that are set.
+        $ogpsr_locality = implode( ' ', array_filter( array((string) ($ogpsr_shipping['city'] ?? ''), (string) ($ogpsr_shipping['state'] ?? ''), (string) ($ogpsr_shipping['postcode'] ?? '')), 'strlen' ) );
+        echo esc_html( implode( ', ', array_filter( array($ogpsr_locality, (string) ($ogpsr_shipping['country'] ?? '')), 'strlen' ) ) );
         ?>
 						</div>
 					</div>
@@ -1249,7 +1238,7 @@ if ( $ogpsr_is_thermal ) {
         esc_html_e( 'Terms & Conditions:', 'semiauto-invoicing' );
         ?></strong><br>
 			<?php 
-        echo wp_kses_post( nl2br( $ogpsr_doc['terms_html'] ) );
+        echo nl2br( esc_html( $ogpsr_doc['terms_html'] ) );
         ?>
 		</div>
 	<?php 

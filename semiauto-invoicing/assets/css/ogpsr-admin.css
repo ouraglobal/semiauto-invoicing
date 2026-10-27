@@ -1137,6 +1137,14 @@ table.form-table tr:has(.ogpsr-compact-showcase-banner) td {
     color: #64748b;
 }
 
+/* WordPress 7 core sizes button icons for a 20px glyph in a 38px button (line-height: 1.9; vertical-align: top), which
+   pushes the plugin's smaller icons below the button text. Each icon's line is its own size, centred with the text. */
+.wp-core-ui .button[class*="ogpsr-"] .dashicons,
+.wp-core-ui [class*="ogpsr-"] .button .dashicons {
+    line-height: 1;
+    vertical-align: middle;
+}
+
 .ogpsr-sync-status-msg {
     display: inline-block;
     vertical-align: middle;

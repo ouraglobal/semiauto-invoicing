@@ -447,6 +447,18 @@ if ( !class_exists( 'OG_PSR_Document_Data_Engine' ) ) {
             $shipping_state = ( $has_location_fields && method_exists( $shipping_source_order, 'get_shipping_state' ) ? ( $shipping_source_order->get_shipping_state() ? $shipping_source_order->get_shipping_state() : $buyer['state'] ) : '' );
             $shipping_postcode = ( in_array( 'postcode', $enabled_fields, true ) && method_exists( $shipping_source_order, 'get_shipping_postcode' ) ? ( $shipping_source_order->get_shipping_postcode() ? $shipping_source_order->get_shipping_postcode() : $buyer['postcode'] ) : '' );
             $shipping_country = ( in_array( 'country', $enabled_fields, true ) && method_exists( $shipping_source_order, 'get_shipping_country' ) ? ( $shipping_source_order->get_shipping_country() ? $shipping_source_order->get_shipping_country() : $buyer['country'] ) : '' );
+            // Shipping country and state print by name, like the billing address (the billing fallbacks are already names).
+            if ( function_exists( 'WC' ) && WC()->countries ) {
+                $shipping_country_code = (string) $shipping_country;
+                $shipping_countries = WC()->countries->get_countries();
+                if ( '' !== $shipping_country_code && isset( $shipping_countries[$shipping_country_code] ) ) {
+                    $shipping_country = $shipping_countries[$shipping_country_code];
+                    $shipping_states = WC()->countries->get_states( $shipping_country_code );
+                    if ( '' !== (string) $shipping_state && is_array( $shipping_states ) && isset( $shipping_states[$shipping_state] ) ) {
+                        $shipping_state = $shipping_states[$shipping_state];
+                    }
+                }
+            }
             $has_shipping = (bool) ($shipping_address_1 || $shipping_city);
             $shipping = array(
                 'enabled'   => $has_shipping,
@@ -636,6 +648,12 @@ if ( !class_exists( 'OG_PSR_Document_Data_Engine' ) ) {
             // Fetch WooCommerce Native Order Item Totals (Order Details & Email Exact Parity)
             $raw_item_totals = ( method_exists( $order, 'get_order_item_totals' ) ? $order->get_order_item_totals() : array() );
             $order_item_totals = array();
+            // Tax rows keep WooCommerce's order and wording; only the recorded rate is added to their label.
+            $order_tax_rates = self::get_order_tax_rates( $order );
+            $tax_row_percents = array();
+            foreach ( $order_tax_rates as $order_tax_rate ) {
+                $tax_row_percents[sanitize_title( $order_tax_rate['code'] )][] = $order_tax_rate['percent'];
+            }
             if ( !empty( $raw_item_totals ) && is_array( $raw_item_totals ) ) {
                 foreach ( $raw_item_totals as $key => $total_row ) {
                     if ( 'payment_method' === $key ) {
@@ -650,6 +668,11 @@ if ( !class_exists( 'OG_PSR_Document_Data_Engine' ) ) {
                         } else {
                             $label = __( 'Discount:', 'semiauto-invoicing' );
                         }
+                    }
+                    if ( isset( $tax_row_percents[$key] ) ) {
+                        $label = self::add_tax_rate_to_label( $label, $tax_row_percents[$key] );
+                    } elseif ( 'tax' === $key ) {
+                        $label = self::add_tax_rate_to_label( $label, array_column( $order_tax_rates, 'percent' ) );
                     }
                     $order_item_totals[$key] = array(
                         'key'   => $key,
@@ -736,7 +759,7 @@ if ( !class_exists( 'OG_PSR_Document_Data_Engine' ) ) {
             if ( method_exists( $order, 'get_tax_totals' ) ) {
                 foreach ( $order->get_tax_totals() as $code => $tax_obj ) {
                     $tax_breakdown[] = array(
-                        'label'  => $tax_obj->label,
+                        'label'  => self::add_tax_rate_to_label( $tax_obj->label, array($order_tax_rates[(int) ($tax_obj->rate_id ?? 0)]['percent'] ?? '') ),
                         'amount' => wc_price( (float) $tax_obj->amount, array(
                             'currency' => $currency,
                         ) ),
@@ -797,7 +820,7 @@ if ( !class_exists( 'OG_PSR_Document_Data_Engine' ) ) {
                 'show_sku'             => 'yes' === OG_PSR_Settings::get( 'ogpsr_a4_show_product_sku', 'no' ),
                 'show_ean'             => 'yes' === OG_PSR_Settings::get( 'ogpsr_a4_show_product_ean', 'no' ),
                 'show_product_meta'    => true,
-                'terms_html'           => ( $is_thermal ? OG_PSR_Settings::get( 'ogpsr_thermal_terms_and_conditions', '' ) : OG_PSR_Settings::get( 'ogpsr_a4_terms_and_conditions', '' ) ),
+                'terms_html'           => sanitize_textarea_field( (string) preg_replace( '/<br\\s*\\/?>/i', "\n", (string) (( $is_thermal ? OG_PSR_Settings::get( 'ogpsr_thermal_terms_and_conditions', '' ) : OG_PSR_Settings::get( 'ogpsr_a4_terms_and_conditions', '' ) )) ) ),
                 'bank_details'         => $bank_accounts,
             );
             return apply_filters( 'ogpsr_universal_document_context', $doc, $order );
@@ -941,6 +964,71 @@ if ( !class_exists( 'OG_PSR_Document_Data_Engine' ) ) {
                 return $m[1] . '-' . $m[2] . '-' . $m[3];
             }
             return '';
+        }
+
+        /**
+         * Tax rates charged on an order, as WooCommerce recorded them on the order's tax lines.
+         *
+         * The rate name and percentage come from the order itself, so a rate edited or deleted later in the
+         * WooCommerce tax settings does not change the documents. A refund uses its parent order's tax lines.
+         *
+         * @param mixed $order Order or refund.
+         * @return array Rate ID => array( 'code' => string, 'label' => string, 'percent' => string ('' when not recorded) ).
+         */
+        public static function get_order_tax_rates( $order ) {
+            $rates = array();
+            if ( !is_object( $order ) || !method_exists( $order, 'get_items' ) ) {
+                return $rates;
+            }
+            $tax_items = $order->get_items( 'tax' );
+            if ( empty( $tax_items ) && $order instanceof WC_Order_Refund ) {
+                $parent = wc_get_order( $order->get_parent_id() );
+                $tax_items = ( $parent ? $parent->get_items( 'tax' ) : array() );
+            }
+            foreach ( (array) $tax_items as $tax_item ) {
+                if ( !$tax_item instanceof WC_Order_Item_Tax ) {
+                    continue;
+                }
+                $percent = $tax_item->get_rate_percent();
+                $rates[(int) $tax_item->get_rate_id()] = array(
+                    'code'    => (string) $tax_item->get_rate_code(),
+                    'label'   => (string) $tax_item->get_label(),
+                    'percent' => ( null === $percent || '' === $percent ? '' : self::format_tax_percent( (float) $percent ) ),
+                );
+            }
+            return $rates;
+        }
+
+        /**
+         * Formats a tax rate the way the store shows decimals, e.g. "19%" or "7,7%".
+         *
+         * @param float $percent Tax rate in percent.
+         * @return string
+         */
+        public static function format_tax_percent( $percent ) {
+            return wc_format_localized_decimal( wc_format_decimal( round( (float) $percent, 4 ), false, true ) ) . '%';
+        }
+
+        /**
+         * Adds the tax rate(s) to a tax label, e.g. "VAT:" becomes "VAT (5%):" and "VAT" becomes "VAT (7% + 19%)".
+         *
+         * The label is returned unchanged when it already shows a percentage or no rate was recorded.
+         *
+         * @param string $label    Tax label (with or without the trailing colon).
+         * @param array  $percents Formatted rates (see format_tax_percent()).
+         * @return string
+         */
+        public static function add_tax_rate_to_label( $label, $percents ) {
+            $label = (string) $label;
+            $percents = array_values( array_unique( array_filter( array_map( 'strval', (array) $percents ), 'strlen' ) ) );
+            if ( empty( $percents ) || false !== strpos( $label, '%' ) ) {
+                return $label;
+            }
+            $trimmed = rtrim( $label );
+            $has_colon = ':' === substr( $trimmed, -1 );
+            $name = ( $has_colon ? rtrim( substr( $trimmed, 0, -1 ) ) : $trimmed );
+            /* translators: 1: tax name, e.g. VAT; 2: tax rate(s), e.g. 19% or 7% + 19% */
+            return sprintf( __( '%1$s (%2$s)', 'semiauto-invoicing' ), $name, implode( ' + ', $percents ) ) . (( $has_colon ? ':' : '' ));
         }
 
         /**

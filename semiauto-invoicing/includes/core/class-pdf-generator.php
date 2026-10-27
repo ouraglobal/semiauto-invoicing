@@ -706,7 +706,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             ), 'portrait' );
             try {
                 // Minify HTML whitespace to optimize Dompdf FrameTree memory usage
-                $html = preg_replace( '/>\\s+</', '><', trim( $html ) );
+                $html = preg_replace( '/>[ \\t]*[\\r\\n]\\s*</', '><', trim( $html ) );
                 $dompdf->loadHtml( $html );
                 if ( is_array( $doc ) && class_exists( 'OG_PSR_Template_Registry' ) ) {
                     $dynamic_rules = OG_PSR_Template_Registry::compile_document_rules( $doc, $html );
@@ -848,7 +848,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             try {
                 $dompdf->setPaper( 'A4', 'portrait' );
                 // Minify HTML whitespace to optimize Dompdf FrameTree memory usage
-                $html = preg_replace( '/>\\s+</', '><', trim( $html ) );
+                $html = preg_replace( '/>[ \\t]*[\\r\\n]\\s*</', '><', trim( $html ) );
                 $dompdf->loadHtml( $html );
                 if ( is_array( $doc ) && class_exists( 'OG_PSR_Template_Registry' ) ) {
                     $dynamic_rules = OG_PSR_Template_Registry::compile_document_rules( $doc, $html );
@@ -974,7 +974,7 @@ if ( !class_exists( 'OG_PSR_PDF_Generator' ) ) {
             try {
                 $dompdf->setPaper( 'A4', 'portrait' );
                 // Minify HTML whitespace to optimize Dompdf FrameTree memory usage
-                $html = preg_replace( '/>\\s+</', '><', trim( $html ) );
+                $html = preg_replace( '/>[ \\t]*[\\r\\n]\\s*</', '><', trim( $html ) );
                 $dompdf->loadHtml( $html );
                 if ( is_array( $doc ) && class_exists( 'OG_PSR_Template_Registry' ) ) {
                     $dynamic_rules = OG_PSR_Template_Registry::compile_document_rules( $doc, $html );

@@ -18,7 +18,7 @@ class OG_PSR_Email_Handler {
             'woocommerce_email_attachments',
             array($this, 'handle_attachments'),
             10,
-            3
+            4
         );
         add_filter( 'woocommerce_email_classes', array(__CLASS__, 'register_email_classes') );
         add_filter(
@@ -27,6 +27,18 @@ class OG_PSR_Email_Handler {
             10,
             2
         );
+    }
+
+    /**
+     * The e-mail ID the attachment settings use for a WooCommerce e-mail: WooCommerce sends a partial refund with the
+     * "Refunded order" e-mail under the ID customer_partially_refunded_order, which the settings list as
+     * customer_refunded_order.
+     *
+     * @param string $email_id WooCommerce e-mail ID.
+     * @return string
+     */
+    public static function get_setting_email_id( $email_id ) {
+        return ( 'customer_partially_refunded_order' === $email_id ? 'customer_refunded_order' : (string) $email_id );
     }
 
     /**
@@ -82,16 +94,24 @@ class OG_PSR_Email_Handler {
     /**
      * Determine which documents to attach to outgoing emails
      */
-    public function handle_attachments( $attachments, $email_id, $order ) {
+    public function handle_attachments(
+        $attachments,
+        $email_id,
+        $order,
+        $email = null
+    ) {
         if ( !$order instanceof WC_Abstract_Order ) {
             return $attachments;
         }
+        // The attachment settings list WooCommerce's e-mails by ID; a partial refund is sent by the "Refunded order"
+        // e-mail under its own ID.
+        $setting_id = self::get_setting_email_id( $email_id );
         $order_id = $order->get_id();
         $pdf_gen = new OG_PSR_PDF_Generator();
         $formats = (array) OG_PSR_Settings::get( 'ogpsr_receipt_formats', array('thermal') );
         // 1. Thermal Receipt Attachment
         $thermal_emails = (array) OG_PSR_Settings::get( 'ogpsr_email_ids', array('new_order') );
-        if ( class_exists( 'OG_PSR_Document_Registry' ) && OG_PSR_Document_Registry::is_email_attachable( 'thermal' ) && in_array( 'thermal', $formats, true ) && (in_array( $email_id, $thermal_emails, true ) || self::$is_sending_reminder && 'customer_invoice' === $email_id) ) {
+        if ( class_exists( 'OG_PSR_Document_Registry' ) && OG_PSR_Document_Registry::is_email_attachable( 'thermal' ) && in_array( 'thermal', $formats, true ) && (in_array( $setting_id, $thermal_emails, true ) || self::$is_sending_reminder && 'customer_invoice' === $email_id) ) {
             $file = $pdf_gen->generate_thermal( $order_id );
             if ( $file && OG_PSR_Document_Registry::validate_document_file( $file, 'thermal' ) ) {
                 $attachments[] = $file;
@@ -101,7 +121,7 @@ class OG_PSR_Email_Handler {
         }
         // 2. A4 Invoice Attachment
         $a4_emails = (array) OG_PSR_Settings::get( 'ogpsr_a4_email_ids', array() );
-        if ( class_exists( 'OG_PSR_Document_Registry' ) && OG_PSR_Document_Registry::is_email_attachable( 'a4' ) && in_array( 'a4', $formats, true ) && in_array( $email_id, $a4_emails, true ) ) {
+        if ( class_exists( 'OG_PSR_Document_Registry' ) && OG_PSR_Document_Registry::is_email_attachable( 'a4' ) && in_array( 'a4', $formats, true ) && in_array( $setting_id, $a4_emails, true ) ) {
             $file = $pdf_gen->generate_a4( $order_id );
             if ( $file && OG_PSR_Document_Registry::validate_document_file( $file, 'a4' ) ) {
                 $attachments[] = $file;
@@ -111,7 +131,7 @@ class OG_PSR_Email_Handler {
         }
         // 3. Packaging Slip Attachment
         $packaging_emails = (array) OG_PSR_Settings::get( 'ogpsr_packaging_email_ids', array() );
-        if ( class_exists( 'OG_PSR_Document_Registry' ) && OG_PSR_Document_Registry::is_email_attachable( 'packaging' ) && in_array( 'packaging', $formats, true ) && in_array( $email_id, $packaging_emails, true ) ) {
+        if ( class_exists( 'OG_PSR_Document_Registry' ) && OG_PSR_Document_Registry::is_email_attachable( 'packaging' ) && in_array( 'packaging', $formats, true ) && in_array( $setting_id, $packaging_emails, true ) ) {
             $file = $pdf_gen->generate_packaging( $order_id );
             if ( $file && OG_PSR_Document_Registry::validate_document_file( $file, 'packaging' ) ) {
                 $attachments[] = $file;

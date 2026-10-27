@@ -3,7 +3,7 @@ Contributors: salmansh169
 Tags: woocommerce, thermal receipt, packaging, pdf invoice, e-invoicing
 Requires at least: 6.0
 Tested up to: 7.1
-Stable tag: 8.5.1
+Stable tag: 8.5.2
 Requires PHP: 8.0
 WC requires at least: 10.0.0
 WC tested up to: 11.2.1
@@ -14,7 +14,7 @@ Local PDFs & Global E-Invoicing compliance assistant. Thermal receipts (44–80m
 
 == Description ==
 
-"semiauto-invoicing" operates as a standards-aligned document generation suite and compliance assistant for WooCommerce stores. Designed for flexibility, speed, and reliability, it assists merchants with formatting continuous thermal receipts (44mm - 80mm), professional A4 PDF invoices, and logistics packing slips directly from WooCommerce orders.
+"semiauto-invoicing" operates as a Tax standards-aligned document generation suite and compliance assistant for WooCommerce stores. Designed for flexibility, speed, and reliability, it assists merchants with formatting continuous thermal receipts (44mm - 80mm), professional A4 PDF invoices, and logistics packing slips directly from WooCommerce orders.
 
 
 ### Compliance Disclaimer
@@ -38,6 +38,19 @@ This plugin uses the [Freemius SDK](https://freemius.com) for license management
 * Public Source Repository: https://github.com/ouraglobal/semiauto-invoicing/
 * Build Process: All JavaScript and CSS source files in the `assets/` directory are unminified, human-readable Vanilla JavaScript and CSS written directly for native browser execution. No compilation or transpilation build step is required.
 
+
+**Premium Global E-Invoicing (Paid):**
+
+*   **International E-Invoicing Standard Engine**: UBL 2.1 and UN/CEFACT CII XML generation for 9 profiles aligned with their official rules (Peppol BIS Billing 3.0 with the 3.0.21 code lists and Norwegian EHF rules, PINT EU, Singapore PINT SG, Malaysia PINT MY, UAE PINT AE, Australia / New Zealand PINT A-NZ, Japan PINT JP, German XRechnung 3.0.2, and Factur-X / ZUGFeRD 2.5 with Chorus Pro).
+*   **PDF/A-3 Hybrid Invoicing**: Embeds validated Factur-X XML directly into PDF/A-3 compliant archives passing veraPDF conformance checks.
+*   **Cross-Border Dynamic Routing**: Automated 81-transition cross-border tax rate matrix with Saxon-C Schematron verification.
+*   **Peppol Access Point Gateways**: Automated outbound transmission and status sync via StoreCove API and A-Cube Peppol API, one gateway per document with an optional fallback.
+*   **StoreCove Delivery Networks**: Optional national networks next to Peppol, switched on per network: Italy SDI, Spain FACe and FACeB2B, Poland KSeF, India IRP (GST e-invoice) and e-mail delivery for business buyers without a Peppol ID.
+*   **Adaptive Checkout**: Country-specific buyer fields (classic and block checkout) shown only for the countries and networks that use them, with national format and check-digit validation.
+*   **High-Precision Math Engine**: 6-decimal tax reconciliation and dual-currency conversion accounting tables.
+*   **Sequential Numbering & Roster**: Custom sequence generator for invoices/credit notes and POS staff roster integration.
+
+Upgrade to Premium: https://ouraglobal.ae/semiauto-invoicing/#pricing
 
 == External services ==
 
@@ -90,26 +103,22 @@ SemiAuto Invoicing supports PNG, WebP, and JPEG images. For optimal print clarit
 
 == Upgrade Notice ==
 
-= 8.5.1 =
-Security hardening of stored documents and Freemius SDK 2.13.5.
-
-= 8.5.0 =
-Maintenance release.
-
+= 8.5.2 =
+Documents set for the "Refunded order" e-mail are also attached to partial refund e-mails.
 
 == Screenshots ==
 
-1. Plugin Settings Page
-2. Thermal Receipt Example
+1. Admin Settings Page
+2. Order Meta Box Example
 3. A4 Invoice Example
+4. Order list page 
 
 == Changelog ==
 
-= 8.5.1 =
-* Security: stored document file names are keyed with the site's secret salt, and every file response is sent with "X-Content-Type-Options: nosniff" (inline responses of variable type are also sandboxed).
-* Freemius SDK updated to 2.13.5.
+= 8.5.2 =
+* Documents attached to the "Refunded order" e-mail are now also attached to WooCommerce's partial refund e-mail.
 
-[See changelog.txt for full release history prior to v8.5.1]
+[See changelog.txt for full release history prior to v8.5.2]
 
 == Third-Party Libraries & Copyright ==
 

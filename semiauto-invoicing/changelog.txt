@@ -1,5 +1,19 @@
 == Changelog ==
 
+= 8.5.1 =
+[//]: # fs_premium_only_begin
+* Premium: New product field "Price Base Quantity (e-invoice)": items priced per 100, per 1000 or another quantity state their price per base quantity in every e-invoicing profile (BT-149 / BT-150); line totals still come from WooCommerce.
+* Premium: New order line field "Buyer PO line (e-invoice)": the buyer's purchase order line is written on each e-invoice line (BT-132); PINT JP invoices now carry it too, not only credit notes.
+* Premium: The order's e-invoicing box shows only the field groups of the profile and route of the order (for example no UAE fields on a German order).
+* Premium: PINT AE: new buyer registration type (Trade License, Emirates ID, Passport with issuing country, other), written with its authority as the official rules require (ibr-180-ae, ibr-101-ae, ibr-010-ae); the PDF prints the matching label.
+* Premium: PINT SG and PINT MY: new "PINT SG Category" and "PINT MY Category" columns in Tax Mapping; tax classes without them are refused with guidance instead of using a category the country does not have.
+* Premium: PINT SG checkout asks a Peppol buyer for the buyer reference or purchase order number (PEPPOL-EN16931-R003-SG).
+* Premium: Product data in more profiles: GTIN in BIS 3 from WooCommerce's GTIN field (invalid check digits left out), contract and project references in PINT EU (document type 50 on credit notes), origin country and classification in PINT JP, item description in Factur-X / ZUGFeRD from EN 16931 level.
+* Premium: Hybrid XRechnung embedding no longer saves its conformance level on the order, so dynamic routing keeps choosing the profile per order.
+[//]: # fs_premium_only_end
+* Security: stored document file names are keyed with the site's secret salt, and every file response is sent with "X-Content-Type-Options: nosniff" (inline responses of variable type are also sandboxed).
+* Freemius SDK updated to 2.13.5.
+
 = 8.5.0 =
 [//]: # fs_premium_only_begin
 * Premium: Document Control on the order screen: every document of an order in one tree (invoice, credit notes, corrected, services, debit, advance, final and summary invoices) with its state; issued documents are locked and changed only with a new document.
